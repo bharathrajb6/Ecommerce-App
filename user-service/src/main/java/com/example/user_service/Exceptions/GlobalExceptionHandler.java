@@ -1,4 +1,4 @@
-package com.example.user_service.Exception;
+package com.example.user_service.Exceptions;
 
 import com.example.user_service.DTO.Response.ErrorResponse;
 import org.springframework.http.HttpStatus;

@@ -1,4 +1,4 @@
-package com.example.user_service.Exception;
+package com.example.user_service.Exceptions;
 
 
 public class UserException extends RuntimeException {
