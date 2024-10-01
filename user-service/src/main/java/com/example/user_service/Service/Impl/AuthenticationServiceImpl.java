@@ -54,14 +54,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return jwtToken;
     }
 
-    public UserResponse getUserDetails(UserRequest request) {
-        User user = userRepository.findById(request.getUsername()).orElseThrow(() -> {
-            logger.error("User not found.");
-            return new UserException("User not found.");
-        });
-        return userMapper.toUserResponse(user);
-    }
-
     @Override
     public String login(UserRequest request) {
         Authentication authentication;

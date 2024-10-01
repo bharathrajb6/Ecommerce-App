@@ -21,8 +21,8 @@ public class AuthenticationController {
         return ApiResponse.<String>builder().result(authenticationService.register(request)).build();
     }
 
-    @RequestMapping(value = "/login",method = RequestMethod.POST)
-    public ApiResponse<String> login(@RequestBody UserRequest request){
+    @RequestMapping(value = "/login", method = RequestMethod.POST)
+    public ApiResponse<String> login(@RequestBody UserRequest request) {
         return ApiResponse.<String>builder().result(authenticationService.login(request)).build();
     }
 }

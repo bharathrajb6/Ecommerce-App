@@ -28,14 +28,14 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
-        return httpSecurity.csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests(req ->
-                        req.requestMatchers("login/**", "/register/**","/refreshToken/**").permitAll().
+        return httpSecurity.csrf(AbstractHttpConfigurer::disable).
+                authorizeHttpRequests(
+                        req -> req.requestMatchers("login/**", "/register/**", "/refreshToken/**").permitAll().
                                 requestMatchers("/api/v1/admin/**").hasAuthority("ADMIN").
-                                requestMatchers("/api/v1/user/**").hasAuthority("USER").
-                                anyRequest().authenticated()).userDetailsService(userService).
+                                requestMatchers("/api/v1/user/**").hasAuthority("USER").anyRequest().authenticated()).
+                userDetailsService(userService).
                 sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)).
-                addFilterBefore(jwtAuthenticationFiler, UsernamePasswordAuthenticationFilter.class).
-                build();
+                addFilterBefore(jwtAuthenticationFiler, UsernamePasswordAuthenticationFilter.class).build();
     }
 
     @Bean
