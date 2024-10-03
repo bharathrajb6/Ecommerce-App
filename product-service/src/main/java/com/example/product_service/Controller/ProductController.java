@@ -11,7 +11,7 @@ import java.util.List;
 
 @RestController
 @CrossOrigin
-@RequestMapping("/api/v1/")
+@RequestMapping("/api/v1")
 public class ProductController {
     @Autowired
     ProductService productService;
@@ -22,8 +22,8 @@ public class ProductController {
      * @return
      */
     @RequestMapping(value = "/product", method = RequestMethod.POST)
-    public ApiResponse<ProductResponse> addProduct(@RequestBody ProductRequest request) {
-        return ApiResponse.<ProductResponse>builder().result(productService.addProduct(request)).build();
+    public ProductResponse addProduct(@RequestBody ProductRequest request) {
+        return productService.addProduct(request);
     }
 
     /***
@@ -32,8 +32,8 @@ public class ProductController {
      * @return
      */
     @RequestMapping(value = "/product/{value}", method = RequestMethod.GET)
-    public ApiResponse<ProductResponse> getProducts(@PathVariable String value) {
-        return ApiResponse.<ProductResponse>builder().result(productService.getProduct(value)).build();
+    public ProductResponse getProducts(@PathVariable String value) {
+        return productService.getProduct(value);
     }
 
     /***
@@ -41,8 +41,8 @@ public class ProductController {
      * @return
      */
     @RequestMapping(value = "/product", method = RequestMethod.GET)
-    public ApiResponse<List<ProductResponse>> getAllProducts() {
-        return ApiResponse.<List<ProductResponse>>builder().result(productService.getAllProducts()).build();
+    public List<ProductResponse> getAllProducts() {
+        return productService.getAllProducts();
     }
 
     /***
@@ -52,8 +52,8 @@ public class ProductController {
      * @return
      */
     @RequestMapping(value = "/product/{productID}", method = RequestMethod.PUT)
-    public ApiResponse<ProductResponse> updateProduct(@PathVariable String prodID, @RequestBody ProductRequest request) {
-        return ApiResponse.<ProductResponse>builder().result(productService.updateProduct(prodID, request)).build();
+    public ProductResponse updateProduct(@PathVariable String prodID, @RequestBody ProductRequest request) {
+        return productService.updateProduct(prodID, request);
     }
 
     /***
@@ -62,8 +62,8 @@ public class ProductController {
      * @return
      */
     @RequestMapping(value = "/product/{value}", method = RequestMethod.DELETE)
-    public ApiResponse<Void> deleteProduct(@PathVariable String value) {
-        return ApiResponse.<Void>builder().message(productService.deleteProduct(value)).build();
+    public String deleteProduct(@PathVariable String value) {
+        return productService.deleteProduct(value);
     }
 
     /***
@@ -72,7 +72,7 @@ public class ProductController {
      * @return
      */
     @RequestMapping(value = "/product/search/{criteria}", method = RequestMethod.GET)
-    public ApiResponse<List<ProductResponse>> searchProduct(@PathVariable String criteria) {
-        return ApiResponse.<List<ProductResponse>>builder().result(productService.searchProduct(criteria)).build();
+    public List<ProductResponse> searchProduct(@PathVariable String criteria) {
+        return productService.searchProduct(criteria);
     }
 }
