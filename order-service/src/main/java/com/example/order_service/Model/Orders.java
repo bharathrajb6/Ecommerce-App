@@ -1,10 +1,7 @@
 package com.example.order_service.Model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -16,6 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString(exclude = "orderItems")
 public class Orders {
     @Id
     @Column(name = "order_id")
@@ -28,7 +26,8 @@ public class Orders {
     private double totalAmount;
 
     @Column(name = "order_status")
-    private String orderStatus;
+    @Enumerated(value = EnumType.STRING)
+    private OrderStatus orderStatus;
 
     @Column(name = "payment_status")
     private String paymentStatus;

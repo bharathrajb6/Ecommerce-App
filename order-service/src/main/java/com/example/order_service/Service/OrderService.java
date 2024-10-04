@@ -7,4 +7,5 @@ public interface OrderService {
 
     OrderResponse placeOrder(OrderRequest request);
 
+    OrderResponse getOrderDetails(String orderID);
 }
