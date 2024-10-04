@@ -22,4 +22,8 @@ public interface ProductService {
     String deleteProductByName(String productName);
 
     List<ProductResponse> searchProduct(String criteria);
+
+    int getProductStock(String prodID);
+
+    ProductResponse updateProductStock(String prodID,int newStock);
 }

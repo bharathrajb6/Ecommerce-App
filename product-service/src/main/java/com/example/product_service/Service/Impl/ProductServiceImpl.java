@@ -230,4 +230,25 @@ public class ProductServiceImpl implements ProductService {
         logger.info(LOG_RETRIVE_ALL_DETAILS_FROM_DB_BASED_ON_SEARCH);
         return productMapper.toProductResponseList(productList);
     }
+
+    @Override
+    public int getProductStock(String prodID) {
+        Product product = productRepository.findByProdID(prodID).orElseThrow(() -> {
+            return new ProductExceptions("Product not found");
+        });
+        return product.getStock();
+    }
+
+    @Override
+    public ProductResponse updateProductStock(String prodID, int newStock) {
+        Product product = productRepository.findByProdID(prodID).orElseThrow(() -> {
+            throw new ProductExceptions("Product not found");
+        });
+        try {
+            int result = productRepository.updateProductStock(newStock,product.getProdID());
+            return getProduct(prodID);
+        } catch (Exception exception) {
+            throw new ProductExceptions(exception.getMessage());
+        }
+    }
 }

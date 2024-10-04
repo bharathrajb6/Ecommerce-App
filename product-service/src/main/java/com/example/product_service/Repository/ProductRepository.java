@@ -37,4 +37,9 @@ public interface ProductRepository extends JpaRepository<Product, String> {
 
     @Query("SELECT p FROM Product p WHERE p.prodName LIKE CONCAT('%', ?1, '%')")
     List<Product> searchProductBasedOnName(String name);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Product p SET p.stock = ?1 where p.prodID = ?2")
+    int updateProductStock(int newStock, String prodID);
 }
