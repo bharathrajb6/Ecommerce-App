@@ -21,13 +21,10 @@ import java.util.UUID;
 
 @Service
 public class OrderHelper {
-
     @Autowired
     private OrderMapper orderMapper;
-
     @Autowired
     private OrderItemMapper orderItemMapper;
-
     @Autowired
     private ProductService productService;
 
@@ -78,14 +75,21 @@ public class OrderHelper {
     }
 
     private String getPaymentStatus(String paymentMethod) {
-        switch (paymentMethod) {
-            case "POD":
-                return "Pending";
-            case "Credit Card":
-            case "Debit Card":
-                return "Completed";
-            default:
-                return "Unknown";
+        return switch (paymentMethod) {
+            case "POD" -> "Pending";
+            case "Credit Card", "Debit Card" -> "Completed";
+            default -> "Unknown";
+        };
+    }
+
+    public void updateProductAfterCancel(List<OrderItems> orderItems) {
+        for (OrderItems item : orderItems) {
+            try {
+                ProductResponse product = productService.getProduct(item.getProductId());
+                productService.updateProductStock(item.getProductId(), product.getStock() + item.getQuantity());
+            } catch (FeignException exception) {
+                throw new OrderException(exception.getMessage());
+            }
         }
     }
 }
