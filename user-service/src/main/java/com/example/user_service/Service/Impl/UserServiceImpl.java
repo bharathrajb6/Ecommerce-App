@@ -20,15 +20,18 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserRepository userRepository;
-
     @Autowired
     private UserMapper userMapper;
-
     @Autowired
     PasswordEncoder passwordEncoder;
 
     private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
+    /***
+     * This method is used to get the user details based on username
+     * @param username
+     * @return
+     */
     @Override
     public UserResponse getUserDetails(String username) {
         User user = userRepository.findByUsername(username).orElseThrow(() -> {
@@ -38,6 +41,11 @@ public class UserServiceImpl implements UserService {
         return userMapper.toUserResponse(user);
     }
 
+    /***
+     * This method is used to update the user details
+     * @param request
+     * @return
+     */
     @Override
     public UserResponse updateUserDetails(UserRequest request) {
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
@@ -50,6 +58,11 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    /***
+     * This method is used to update the password
+     * @param request
+     * @return
+     */
     @Override
     public UserResponse updatePassword(UserRequest request) {
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {

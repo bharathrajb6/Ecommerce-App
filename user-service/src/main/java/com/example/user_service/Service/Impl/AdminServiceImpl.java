@@ -13,16 +13,19 @@ import org.springframework.stereotype.Service;
 public class AdminServiceImpl implements AdminService {
     @Autowired
     private UserRepository userRepository;
-
     @Autowired
     private UserMapper userMapper;
 
+    /***
+     * This method is used to get the details of the admin
+     * @param username
+     * @return
+     */
     @Override
     public UserResponse getAdminDetails(String username) {
         User user = userRepository.findByUsername(username).orElseThrow(() -> {
             return new UserException("Username not found");
         });
         return userMapper.toUserResponse(user);
-
     }
 }

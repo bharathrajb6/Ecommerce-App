@@ -7,6 +7,7 @@ import com.example.user_service.Service.ProductService;
 import feign.FeignException;
 import jakarta.ws.rs.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,6 +18,10 @@ public class ProductServiceImpl {
     @Autowired
     private ProductService productService;
 
+    /***
+     * This method is used to get all the products used by both admin and user
+     * @return
+     */
     public List<ProductResponse> getAllProducts() {
         try {
             return productService.getAllProducts();
@@ -28,6 +33,11 @@ public class ProductServiceImpl {
         }
     }
 
+    /***
+     * This method is used to get the product by ID used by both admin and user
+     * @param prodID
+     * @return
+     */
     public ProductResponse getProduct(String prodID) {
         try {
             return productService.getProduct(prodID);
@@ -39,14 +49,25 @@ public class ProductServiceImpl {
         }
     }
 
+    /***
+     * This method is used to search the product by criteria used by both admin and user
+     * @param criteria
+     * @return
+     */
     public List<ProductResponse> searchProduct(String criteria) {
         return productService.searchProduct(criteria);
     }
 
+    /***
+     * This method is used to add the product used by admin
+     * @param request
+     * @return
+     */
+    @PreAuthorize("hasRole('ADMIN')")
     public ProductResponse addProduct(ProductRequest request) {
-        try{
+        try {
             return productService.addProduct(request);
-        }catch (FeignException exception){
+        } catch (FeignException exception) {
             if (exception.status() == 404) {
                 throw new ProductException("Resource not found");
             }
@@ -54,7 +75,14 @@ public class ProductServiceImpl {
         }
     }
 
+    /***
+     * This method is used to update the product used by admin
+     * @param prodID
+     * @param request
+     * @return
+     */
+    @PreAuthorize("hasRole('ADMIN')")
     public ProductResponse updateProduct(String prodID, ProductRequest request) {
-        return productService.updateProduct(prodID,request);
+        return productService.updateProduct(prodID, request);
     }
 }

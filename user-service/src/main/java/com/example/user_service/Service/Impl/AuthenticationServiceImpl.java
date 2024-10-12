@@ -1,14 +1,12 @@
 package com.example.user_service.Service.Impl;
 
 import com.example.user_service.DTO.Request.UserRequest;
-import com.example.user_service.DTO.Response.UserResponse;
 import com.example.user_service.Exceptions.UserException;
 import com.example.user_service.Mapper.UserMapper;
 import com.example.user_service.Model.Token;
 import com.example.user_service.Model.User;
 import com.example.user_service.Repository.TokenRepository;
 import com.example.user_service.Repository.UserRepository;
-import com.example.user_service.Service.JwtService;
 import com.example.user_service.Service.AuthenticationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,15 +30,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private JwtService jwtService;
-
     @Autowired
     private AuthenticationManager authenticationManager;
-
     @Autowired
     private TokenRepository tokenRepository;
-
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
 
+    /***
+     * Register a new user
+     * @param request
+     * @return
+     */
     public String register(UserRequest request) {
         if (userRepository.findById(request.getUsername()).isPresent()) {
             logger.error("Username is already exists");
@@ -54,6 +54,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return jwtToken;
     }
 
+    /***
+     * Login a user
+     * @param request
+     * @return
+     */
     @Override
     public String login(UserRequest request) {
         Authentication authentication;
@@ -73,6 +78,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
     }
 
+    /***
+     * Save the user token
+     * @param jwt_token
+     * @param user
+     */
     private void saveUserToken(String jwt_token, User user) {
         Token token = new Token();
         token.setTokenId(String.valueOf(UUID.randomUUID()));
@@ -82,6 +92,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         tokenRepository.save(token);
     }
 
+    /***
+     * Revoke all tokens by user
+     * @param user
+     */
     private void revokeAllTokensByUser(User user) {
         List<Token> validTokensListByUser = tokenRepository.findAllTokens(user.getUsername());
         if (!validTokensListByUser.isEmpty()) {

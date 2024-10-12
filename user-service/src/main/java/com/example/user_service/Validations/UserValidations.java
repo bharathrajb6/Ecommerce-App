@@ -5,6 +5,10 @@ import com.example.user_service.Exceptions.UserException;
 
 public class UserValidations {
 
+    /***
+     * This method is used to validate the user details
+     * @param request
+     */
     public static void validateUserDetails(UserRequest request) {
         if (request.getFirstName() == null || request.getFirstName().isEmpty()) {
             throw new UserException("First name cannot be empty.");

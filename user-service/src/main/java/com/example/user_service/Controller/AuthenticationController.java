@@ -16,11 +16,21 @@ public class AuthenticationController {
     @Autowired
     AuthenticationServiceImpl authenticationService;
 
+    /***
+     * Register a new user
+     * @param request
+     * @return
+     */
     @RequestMapping(value = "/register", method = RequestMethod.POST)
     public ApiResponse<String> register(@RequestBody UserRequest request) {
         return ApiResponse.<String>builder().result(authenticationService.register(request)).build();
     }
 
+    /***
+     * Login a user
+     * @param request
+     * @return
+     */
     @RequestMapping(value = "/login", method = RequestMethod.POST)
     public ApiResponse<String> login(@RequestBody UserRequest request) {
         return ApiResponse.<String>builder().result(authenticationService.login(request)).build();
