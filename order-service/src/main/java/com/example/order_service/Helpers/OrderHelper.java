@@ -28,6 +28,11 @@ public class OrderHelper {
     @Autowired
     private ProductService productService;
 
+    /***
+     * This method is used to generate order
+     * @param request
+     * @return
+     */
     public Orders generateOrder(OrderRequest request) {
         checkIfAllProductsStocks(request.getOrderItems());
         Orders order = orderMapper.toOrders(request);
@@ -51,6 +56,11 @@ public class OrderHelper {
         return order;
     }
 
+    /***
+     * This method is used to calculate total amount
+     * @param orderItemRequestList
+     * @return
+     */
     private Double calculateTotalAmount(List<OrderItemRequest> orderItemRequestList) {
         return orderItemRequestList.stream().mapToDouble(itemRequest -> {
             ProductResponse product = productService.getProduct(itemRequest.getProductId());
@@ -61,6 +71,10 @@ public class OrderHelper {
     }
 
 
+    /***
+     * This method is used to check if all products have stocks
+     * @param orderItems
+     */
     private void checkIfAllProductsStocks(List<OrderItemRequest> orderItems) {
         orderItems.forEach(item -> {
             try {
@@ -74,6 +88,11 @@ public class OrderHelper {
         });
     }
 
+    /***
+     * This method is used to get payment status
+     * @param paymentMethod
+     * @return
+     */
     private String getPaymentStatus(String paymentMethod) {
         return switch (paymentMethod) {
             case "POD" -> "Pending";
@@ -82,6 +101,10 @@ public class OrderHelper {
         };
     }
 
+    /***
+     * This method is used to update product after cancel
+     * @param orderItems
+     */
     public void updateProductAfterCancel(List<OrderItems> orderItems) {
         for (OrderItems item : orderItems) {
             try {

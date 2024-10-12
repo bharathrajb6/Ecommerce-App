@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 
+/***
+ * OrderRequest class is used to get the order request from the user
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

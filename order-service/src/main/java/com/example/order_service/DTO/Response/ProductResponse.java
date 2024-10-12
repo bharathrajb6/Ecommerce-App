@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 
 import java.sql.Timestamp;
 
+/***
+ * ProductResponse class is a response class that is used to send the product details to the client
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

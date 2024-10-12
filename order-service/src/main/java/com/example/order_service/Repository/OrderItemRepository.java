@@ -11,6 +11,11 @@ import java.util.List;
 @Repository
 public interface OrderItemRepository extends JpaRepository<OrderItems,String> {
 
+    /***
+     * Find all order items for a given order
+     * @param order
+     * @return
+     */
     @Query("select o from OrderItems o where o.order = ?1")
     List<OrderItems> findAllOrderItems(Orders order);
 }

@@ -1,6 +1,5 @@
 package com.example.order_service.DTO.Response;
 
-import com.example.order_service.Model.OrderItems;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,6 +9,10 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+
+/***
+ * OrderResponse class is responsible for holding the response data of the order
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

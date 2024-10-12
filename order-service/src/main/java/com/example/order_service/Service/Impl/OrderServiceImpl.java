@@ -133,11 +133,21 @@ public class OrderServiceImpl implements OrderService, MailService {
         return orderMapper.toOrderResponse(orderRepository.getOrderByTrackingNumber(trackingNumber));
     }
 
+    /***
+     * This method is used to get all orders based on username
+     * @param username
+     * @return
+     */
     @Override
     public List<OrderResponse> getAllOrdersByUserName(String username) {
         return orderMapper.toOrderResponseList(orderRepository.getOrdersByUsername(username));
     }
 
+    /***
+     * This method is used to get all orders based on created date
+     * @param criteria
+     * @return
+     */
     @Override
     public List<OrderResponse> searchOrdersByCreatedDate(Timestamp criteria) {
         return orderMapper.toOrderResponseList(orderRepository.searchOrdersByCreatedDate(criteria));

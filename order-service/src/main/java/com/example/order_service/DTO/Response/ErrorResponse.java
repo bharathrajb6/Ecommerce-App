@@ -5,6 +5,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/***
+ * ErrorResponse class is used to send error response to the client
+ */
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor

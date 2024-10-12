@@ -5,6 +5,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/***
+ * OrderItemRequest class is used to get the product id and quantity of the product
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

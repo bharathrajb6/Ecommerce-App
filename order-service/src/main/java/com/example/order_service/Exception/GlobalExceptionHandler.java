@@ -10,6 +10,12 @@ import org.springframework.web.context.request.WebRequest;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+    /***
+     * This method handles the OrderException
+     * @param exception
+     * @param request
+     * @return
+     */
     @ExceptionHandler(OrderException.class)
     public ResponseEntity<?> handleOrderException(OrderException exception, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), exception.getMessage());

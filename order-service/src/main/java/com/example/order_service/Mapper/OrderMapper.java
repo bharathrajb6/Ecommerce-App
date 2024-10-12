@@ -7,6 +7,9 @@ import org.mapstruct.Mapper;
 
 import java.util.List;
 
+/***
+ * This is the OrderMapper interface
+ */
 @Mapper(componentModel = "spring")
 public interface OrderMapper {
 

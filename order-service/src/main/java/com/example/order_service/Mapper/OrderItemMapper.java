@@ -6,6 +6,9 @@ import org.mapstruct.Mapper;
 
 import java.util.List;
 
+/***
+ * This is the OrderItemMapper interface
+ */
 @Mapper(componentModel = "spring")
 public interface OrderItemMapper {
     List<OrderItemResponse> toOrderItemResponse(List<OrderItems> items);

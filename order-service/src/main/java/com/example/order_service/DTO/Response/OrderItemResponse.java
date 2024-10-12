@@ -5,6 +5,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/***
+ * OrderItemResponse class is a response class for OrderItem
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

@@ -16,24 +16,56 @@ import java.util.List;
 @Repository
 public interface OrderRepository extends JpaRepository<Orders, String> {
 
+    /***
+     * This method is used to update order status by order id
+     * @param status
+     * @param updatedAt
+     * @param orderID
+     */
     @Modifying
     @Transactional
     @Query("UPDATE Orders o SET o.orderStatus = ?1,o.updatedAt = ?2 WHERE o.orderID = ?3")
     void updateOrderStatus(OrderStatus status, Timestamp updatedAt, String orderID);
 
 
+    /***
+     * This method is used to get all cancelled orders by username
+     * @param orderStatus
+     * @param username
+     * @return
+     */
     @Query("SELECT o from Orders o where o.orderStatus = ?1 and o.username = ?2")
     List<Orders> getAllCancelledOrders(OrderStatus orderStatus, String username);
 
+    /***
+     * This method is used to get order details by tracking number
+     * @param trackingNumber
+     * @return
+     */
     @Query("SELECT o from Orders o where o.trackingNumber = ?1")
     Orders getOrderByTrackingNumber(String trackingNumber);
 
+    /***
+     * This method is used to get all orders by username
+     * @param username
+     * @return
+     */
     List<Orders> getOrdersByUsername(String username);
 
+    /***
+     * This method is used to search orders by created date
+     * @param createdAt
+     * @return
+     */
     @Query("SELECT o FROM Orders o WHERE o.createdAt = ?1")
     List<Orders> searchOrdersByCreatedDate(Timestamp createdAt);
 
 
+    /***
+     * This method is used to search orders by order status
+     * @param status
+     * @return
+     */
     @Query("SELECT o from Orders o where o.orderStatus LIKE CONCAT('%', ?1, '%')")
     List<Orders> searchOrdersByOrderStatus(String status);
 
