@@ -17,6 +17,7 @@ import java.util.List;
 @Builder
 public class OrderRequest {
     private List<OrderItemRequest> orderItems = new ArrayList<>();
+    private String username;
     private String paymentMethod;
     private String shippingAddress;
     private String shippingMethod;

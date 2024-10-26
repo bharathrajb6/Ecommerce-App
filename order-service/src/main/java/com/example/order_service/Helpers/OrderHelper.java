@@ -36,8 +36,8 @@ public class OrderHelper {
     public Orders generateOrder(OrderRequest request) {
         checkIfAllProductsStocks(request.getOrderItems());
         Orders order = orderMapper.toOrders(request);
+        order.setUsername(request.getUsername());
         order.setOrderID(UUID.randomUUID().toString());
-        order.setUsername("bharath");
         order.setOrderStatus(OrderStatus.PLACED);
         order.setTrackingNumber("TRACK" + UUID.randomUUID().toString());
         order.setTotalAmount(calculateTotalAmount(request.getOrderItems()));

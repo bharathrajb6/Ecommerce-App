@@ -18,6 +18,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class OrderResponse {
+    private String orderID;
     private List<OrderItemResponse> orderItems = new ArrayList<>();
     private double totalAmount;
     private String orderStatus;

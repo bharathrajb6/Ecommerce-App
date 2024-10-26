@@ -91,8 +91,8 @@ public class OrderController {
      * @param criteria
      * @return
      */
-    @RequestMapping(value = "/order/search/{username}",method = RequestMethod.GET)
-    public List<OrderResponse> getAllOrdersByUserName(@PathVariable String username){
+    @RequestMapping(value = "/order/search/{username}", method = RequestMethod.GET)
+    public List<OrderResponse> getAllOrdersByUserName(@PathVariable String username) {
         return orderService.getAllOrdersByUserName(username);
     }
 }
