@@ -28,6 +28,6 @@ public interface ProductService {
     @RequestMapping(value = "/api/v1/product/{value}", method = RequestMethod.DELETE)
     String deleteProduct(@PathVariable String value);
 
-    @RequestMapping(value = "/product/search/{criteria}", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/v1/product/search/{criteria}", method = RequestMethod.GET)
     List<ProductResponse> searchProduct(@PathVariable String criteria);
 }
