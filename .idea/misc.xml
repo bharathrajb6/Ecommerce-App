@@ -8,6 +8,7 @@
         <option value="$PROJECT_DIR$/order-service/pom.xml" />
         <option value="$PROJECT_DIR$/user-service/pom.xml" />
         <option value="$PROJECT_DIR$/Ecom-Eureka-Server/pom.xml" />
+        <option value="$PROJECT_DIR$/cart-service/pom.xml" />
       </list>
     </option>
   </component>
