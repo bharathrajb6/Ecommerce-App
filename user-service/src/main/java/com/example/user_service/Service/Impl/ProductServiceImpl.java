@@ -71,7 +71,10 @@ public class ProductServiceImpl {
             if (exception.status() == 404) {
                 throw new ProductException("Resource not found");
             }
-            throw new BadRequestException("Bad request while fetching product.");
+            if (exception.status() == 400) {
+                throw new ProductException(exception.getMessage());
+            }
+            throw new ProductException("Bad request while adding product.");
         }
     }
 
@@ -85,4 +88,10 @@ public class ProductServiceImpl {
     public ProductResponse updateProduct(String prodID, ProductRequest request) {
         return productService.updateProduct(prodID, request);
     }
+
+
+    public String deleteProduct(String prodID) {
+        return productService.deleteProduct(prodID);
+    }
+
 }

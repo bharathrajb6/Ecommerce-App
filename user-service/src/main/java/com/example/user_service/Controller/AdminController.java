@@ -8,17 +8,20 @@ import com.example.user_service.DTO.Response.UserResponse;
 import com.example.user_service.Service.Impl.ProductServiceImpl;
 import com.example.user_service.Service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@RequestMapping("/api/v1/admin/")
+@RequestMapping("/api/v1/admin")
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
     @Autowired
     private UserService userService;
 
+    @Autowired
     private ProductServiceImpl productService;
 
     /***
@@ -26,7 +29,7 @@ public class AdminController {
      * @param authentication
      * @return
      */
-    @RequestMapping(value = "getDetails", method = RequestMethod.GET)
+    @RequestMapping(value = "/getDetails", method = RequestMethod.GET)
     public ApiResponse<UserResponse> getUserDetails(Authentication authentication) {
         return ApiResponse.<UserResponse>builder().result(userService.getUserDetails(authentication.getName())).build();
     }
@@ -36,7 +39,7 @@ public class AdminController {
      * @param request
      * @return
      */
-    @RequestMapping(value = "updateDetails", method = RequestMethod.PUT)
+    @RequestMapping(value = "/updateDetails", method = RequestMethod.PUT)
     public ApiResponse<UserResponse> updateDetails(@RequestBody UserRequest request) {
         return ApiResponse.<UserResponse>builder().result(userService.updateUserDetails(request)).build();
     }
@@ -46,7 +49,7 @@ public class AdminController {
      * @param request
      * @return
      */
-    @RequestMapping(value = "updatePassword", method = RequestMethod.PUT)
+    @RequestMapping(value = "/updatePassword", method = RequestMethod.PUT)
     public ApiResponse<UserResponse> updatePassword(@RequestBody UserRequest request) {
         return ApiResponse.<UserResponse>builder().result(userService.updatePassword(request)).build();
     }
