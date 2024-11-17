@@ -5,13 +5,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.sql.Timestamp;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class CartRequest {
-    private String username;
-    private List<CartItemsRequest> cartItemsList;
+public class CartItemsRequest {
+    private String prodID;
+    private double price;
+    private int quantity;
 }

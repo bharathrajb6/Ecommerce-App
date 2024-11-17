@@ -1,10 +1,7 @@
 package com.example.cart_service.Model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -16,7 +13,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@ToString(exclude = "cartItemsList")
 public class Cart {
     @Id
     @Column(name = "cart_id")

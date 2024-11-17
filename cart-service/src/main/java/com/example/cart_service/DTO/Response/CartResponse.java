@@ -1,6 +1,5 @@
 package com.example.cart_service.DTO.Response;
 
-import com.example.cart_service.DTO.Request.ProductRequest;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,5 +14,5 @@ import java.util.List;
 public class CartResponse {
     private String cartID;
     private String username;
-    private List<ProductRequest> productList;
+    private List<CartItemResponse> cartItemsList;
 }
