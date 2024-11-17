@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class CartServiceImpl implements CartService {
@@ -61,12 +62,18 @@ public class CartServiceImpl implements CartService {
         Cart cart = cartRepository.findByUsername(username).orElseThrow(() -> {
             return new CartException("Cart Items not found.");
         });
-        for (String productID : productIDs) {
-            try {
-                cartItemRepository.deleteProductFromCart(cart, productID);
-            } catch (Exception exception) {
-                throw new CartException(exception.getMessage());
-            }
+        List<String> failedDeletes = productIDs.stream()
+                .filter(productID -> {
+                    try {
+                        cartItemRepository.deleteProductFromCart(cart, productID);
+                        return false; // Successful delete
+                    } catch (Exception e) {
+                        return true; // Failed delete
+                    }
+                })
+                .collect(Collectors.toList());
+        if (!failedDeletes.isEmpty()) {
+            throw new CartException("Failed to delete items: " + failedDeletes);
         }
         return "Items have been deleted successfully";
     }
