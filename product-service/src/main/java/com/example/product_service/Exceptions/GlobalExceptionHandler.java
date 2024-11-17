@@ -3,11 +3,13 @@ package com.example.product_service.Exceptions;
 import com.example.product_service.DTO.Response.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 
-@ControllerAdvice
+import java.time.LocalDateTime;
+
+@RestControllerAdvice
 public class GlobalExceptionHandler {
     /***
      * This method is used to handle the exception thrown by the Brand Service
@@ -17,7 +19,10 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BrandExceptions.class)
     public ResponseEntity<?> handleBrandUpdateException(BrandExceptions ex, WebRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Brand Error",
+                ex.getMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
@@ -29,7 +34,10 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(CategoryExceptions.class)
     public ResponseEntity<?> handleCategoryExceptions(CategoryExceptions ex, WebRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Category Error",
+                ex.getMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
@@ -41,7 +49,10 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(ProductExceptions.class)
     public ResponseEntity<?> handleProductExceptions(ProductExceptions ex, WebRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Product Error",
+                ex.getMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 

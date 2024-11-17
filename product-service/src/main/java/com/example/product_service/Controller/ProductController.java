@@ -76,13 +76,13 @@ public class ProductController {
         return productService.searchProduct(criteria);
     }
 
-    @RequestMapping(value = "/product/getStock/{prodID}", method = RequestMethod.GET)
+    @RequestMapping(value = "/product/{prodID}/stock", method = RequestMethod.GET)
     public int getStock(@PathVariable String prodID) {
         return productService.getProductStock(prodID);
     }
 
 
-    @RequestMapping(value = "/product/updateStock/{prodID}",method = RequestMethod.PUT)
+    @RequestMapping(value = "/product/{prodID}/stock",method = RequestMethod.PUT)
     public ProductResponse updateProductStock(@PathVariable String prodID, @RequestBody int newStock){
         return productService.updateProductStock(prodID,newStock);
     }
