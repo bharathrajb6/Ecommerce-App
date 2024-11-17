@@ -8,8 +8,7 @@ import com.example.user_service.Model.User;
 import com.example.user_service.Repository.TokenRepository;
 import com.example.user_service.Repository.UserRepository;
 import com.example.user_service.Service.AuthenticationService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,7 +19,10 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 
+import static com.example.user_service.messages.UserMessages.*;
+
 @Service
+@Slf4j
 public class AuthenticationServiceImpl implements AuthenticationService {
     @Autowired
     private UserRepository userRepository;
@@ -34,7 +36,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private AuthenticationManager authenticationManager;
     @Autowired
     private TokenRepository tokenRepository;
-    private static final Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
 
     /***
      * Register a new user
@@ -43,12 +44,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      */
     public String register(UserRequest request) {
         if (userRepository.findById(request.getUsername()).isPresent()) {
-            logger.error("Username is already exists");
-            throw new UserException("User already exists");
+            log.error(USERNAME_ALREADY_EXISTS);
+            throw new UserException(USERNAME_ALREADY_EXISTS);
         }
         User user = userMapper.toUser(request);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         userRepository.save(user);
+        log.info(USER_SAVED_SUCCESSFULLY);
         String jwtToken = jwtService.generateToken(user);
         saveUserToken(jwtToken, user);
         return jwtToken;
@@ -66,6 +68,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
         } catch (Exception e) {
             authentication = null;
+            log.error(UNABLE_TO_FIND_ACCOUNT, request.getUsername());
         }
         User user = userRepository.findById(request.getUsername()).orElse(null);
         if (user != null && authentication != null) {
@@ -90,6 +93,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         token.setUser(user);
         token.setLoggedOut(false);
         tokenRepository.save(token);
+        log.info(USER_TOKEN_SAVED_SUCCESSFULLY);
     }
 
     /***
@@ -104,5 +108,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             });
         }
         tokenRepository.deleteAll(validTokensListByUser);
+        log.info(DELETE_TOKENS_FOR_USER, user.getUsername());
     }
 }

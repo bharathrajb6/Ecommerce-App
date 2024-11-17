@@ -4,8 +4,7 @@ import com.example.user_service.DTO.Request.ProductRequest;
 import com.example.user_service.DTO.Response.ProductResponse;
 import com.example.user_service.Exceptions.ProductException;
 import com.example.user_service.Service.ProductService;
-import feign.FeignException;
-import jakarta.ws.rs.BadRequestException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -13,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
+@Slf4j
 public class ProductServiceImpl {
 
     @Autowired
@@ -25,11 +25,9 @@ public class ProductServiceImpl {
     public List<ProductResponse> getAllProducts() {
         try {
             return productService.getAllProducts();
-        } catch (FeignException exception) {
-            if (exception.status() == 404) {
-                throw new ProductException(exception.getMessage());
-            }
-            throw new BadRequestException("Bad request while fetching product.");
+        } catch (ProductException exception) {
+            log.error(exception.getMessage());
+            throw new ProductException(exception.getMessage());
         }
     }
 
@@ -41,11 +39,9 @@ public class ProductServiceImpl {
     public ProductResponse getProduct(String prodID) {
         try {
             return productService.getProduct(prodID);
-        } catch (FeignException exception) {
-            if (exception.status() == 404) {
-                throw new ProductException("Product not found with ID " + prodID);
-            }
-            throw new ProductException("Bad request while fetching product.");
+        } catch (ProductException exception) {
+            log.error(exception.getMessage());
+            throw new ProductException(exception.getMessage());
         }
     }
 
@@ -67,14 +63,9 @@ public class ProductServiceImpl {
     public ProductResponse addProduct(ProductRequest request) {
         try {
             return productService.addProduct(request);
-        } catch (FeignException exception) {
-            if (exception.status() == 404) {
-                throw new ProductException("Resource not found");
-            }
-            if (exception.status() == 400) {
-                throw new ProductException(exception.getMessage());
-            }
-            throw new ProductException("Bad request while adding product.");
+        } catch (ProductException productException) {
+            log.error(productException.getMessage());
+            throw new ProductException(productException.getMessage());
         }
     }
 
@@ -86,12 +77,22 @@ public class ProductServiceImpl {
      */
     @PreAuthorize("hasRole('ADMIN')")
     public ProductResponse updateProduct(String prodID, ProductRequest request) {
-        return productService.updateProduct(prodID, request);
+        try {
+            return productService.updateProduct(prodID, request);
+        } catch (ProductException productException) {
+            log.error(productException.getMessage());
+            throw new ProductException(productException.getMessage());
+        }
     }
 
 
     public String deleteProduct(String prodID) {
-        return productService.deleteProduct(prodID);
+        try{
+            return productService.deleteProduct(prodID);
+        }catch(ProductException productException){
+            log.error(productException.getMessage());
+            throw new ProductException(productException.getMessage());
+        }
     }
 
 }

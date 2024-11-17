@@ -25,10 +25,10 @@ public interface OrderService {
     @RequestMapping(value = "/api/v1/order/{orderID}/status", method = RequestMethod.PUT)
     OrderResponse updateOrderStatus(@PathVariable String orderID, @RequestBody String orderStatus);
 
-    @RequestMapping(value = "/api/v1/order/cancel/{orderID}", method = RequestMethod.PUT)
+    @RequestMapping(value = "/api/v1/order/{orderID}/cancel", method = RequestMethod.PUT)
     String cancelOrder(@PathVariable String orderID);
 
-    @RequestMapping(value = "/api/v1/order/cancelled/{username}", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/v1/order/{username}/cancelled", method = RequestMethod.GET)
     List<OrderResponse> getAllCancelledOrders(@PathVariable String username);
 
     @RequestMapping(value = "/api/v1/order/track/{trackingNumber}", method = RequestMethod.GET)

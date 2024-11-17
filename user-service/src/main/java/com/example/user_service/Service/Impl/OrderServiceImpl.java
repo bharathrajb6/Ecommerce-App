@@ -3,8 +3,9 @@ package com.example.user_service.Service.Impl;
 import com.example.user_service.DTO.Request.OrderRequest;
 import com.example.user_service.DTO.Response.OrderResponse;
 import com.example.user_service.Exceptions.OrderException;
+import com.example.user_service.Exceptions.ProductException;
 import com.example.user_service.Service.OrderService;
-import feign.FeignException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
+@Slf4j
 public class OrderServiceImpl {
     @Autowired
     private OrderService orderService;
@@ -24,112 +26,75 @@ public class OrderServiceImpl {
         request.setUsername(getUsername());
         try {
             return orderService.placeOrder(request);
-        } catch (FeignException exception) {
-            if (exception.status() == 404) {
-                throw new OrderException("Resource not found");
-            }
-            if (exception.status() == 400) {
-                throw new OrderException(exception.getMessage());
-            }
-            throw new OrderException("Bad request");
+        } catch (ProductException productException) {
+            log.error(productException.getMessage());
+            throw new ProductException(productException.getMessage());
+        } catch (OrderException orderException) {
+            log.error(orderException.getMessage());
+            throw new OrderException(orderException.getMessage());
         }
     }
 
     public OrderResponse getOrderDetails(String orderID) {
         try {
             return orderService.getOrderDetails(orderID);
-        } catch (FeignException exception) {
-            if (exception.status() == 404) {
-                throw new OrderException("Resource not found");
-            }
-            if (exception.status() == 400) {
-                throw new OrderException(exception.getMessage());
-            }
-            throw new OrderException("Bad request");
+        } catch (OrderException orderException) {
+            log.error(orderException.getMessage());
+            throw new OrderException(orderException.getMessage());
         }
     }
 
     public List<OrderResponse> getAllOrderDetails() {
         try {
             return orderService.getAllOrders();
-        } catch (FeignException exception) {
-            if (exception.status() == 404) {
-                throw new OrderException("Resource not found");
-            }
-            if (exception.status() == 400) {
-                throw new OrderException(exception.getMessage());
-            }
-            throw new OrderException("Bad request");
+        } catch (OrderException orderException) {
+            log.error(orderException.getMessage());
+            throw new OrderException(orderException.getMessage());
         }
     }
 
     public OrderResponse updateOrderStatus(String orderID, String orderStatus) {
         try {
             return orderService.updateOrderStatus(orderID, orderStatus);
-        } catch (FeignException exception) {
-            if (exception.status() == 404) {
-                throw new OrderException("Resource not found");
-            }
-            if (exception.status() == 400) {
-                throw new OrderException(exception.getMessage());
-            }
-            throw new OrderException("Bad request");
+        } catch (OrderException orderException) {
+            log.error(orderException.getMessage());
+            throw new OrderException(orderException.getMessage());
         }
     }
 
     public String cancelOrder(String orderID) {
         try {
             return orderService.cancelOrder(orderID);
-        } catch (FeignException exception) {
-            if (exception.status() == 404) {
-                throw new OrderException("Resource not found");
-            }
-            if (exception.status() == 400) {
-                throw new OrderException(exception.getMessage());
-            }
-            throw new OrderException("Bad request");
+        } catch (OrderException orderException) {
+            log.error(orderException.getMessage());
+            throw new OrderException(orderException.getMessage());
         }
     }
 
     public List<OrderResponse> getAllCancelledOrders() {
         try {
             return orderService.getAllCancelledOrders(getUsername());
-        } catch (FeignException exception) {
-            if (exception.status() == 404) {
-                throw new OrderException("Resource not found");
-            }
-            if (exception.status() == 400) {
-                throw new OrderException(exception.getMessage());
-            }
-            throw new OrderException("Bad request");
+        } catch (OrderException orderException) {
+            log.error(orderException.getMessage());
+            throw new OrderException(orderException.getMessage());
         }
     }
 
     public OrderResponse getOrderByTrackingNumber(String trackingNumber) {
         try {
             return orderService.getOrderByTrackingNumber(trackingNumber);
-        } catch (FeignException exception) {
-            if (exception.status() == 404) {
-                throw new OrderException("Resource not found");
-            }
-            if (exception.status() == 400) {
-                throw new OrderException(exception.getMessage());
-            }
-            throw new OrderException("Bad request");
+        } catch (OrderException orderException) {
+            log.error(orderException.getMessage());
+            throw new OrderException(orderException.getMessage());
         }
     }
 
     public List<OrderResponse> getAllOrdersByUserName() {
         try {
             return orderService.getAllOrdersByUserName(getUsername());
-        } catch (FeignException exception) {
-            if (exception.status() == 404) {
-                throw new OrderException("Resource not found");
-            }
-            if (exception.status() == 400) {
-                throw new OrderException(exception.getMessage());
-            }
-            throw new OrderException("Bad request");
+        } catch (OrderException orderException) {
+            log.error(orderException.getMessage());
+            throw new OrderException(orderException.getMessage());
         }
     }
 }

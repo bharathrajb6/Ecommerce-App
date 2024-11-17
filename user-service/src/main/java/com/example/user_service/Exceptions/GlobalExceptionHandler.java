@@ -3,10 +3,10 @@ package com.example.user_service.Exceptions;
 import com.example.user_service.DTO.Response.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-@ControllerAdvice
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
     /***
@@ -16,7 +16,10 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(UserException.class)
     public ResponseEntity<?> handleUserException(UserException ex) {
-        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "User Error",
+                ex.getMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
@@ -26,8 +29,11 @@ public class GlobalExceptionHandler {
      * @return
      */
     @ExceptionHandler(ProductException.class)
-    public ResponseEntity<?> handleUserException(ProductException ex) {
-        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
+    public ResponseEntity<?> handleProductException(ProductException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "Product Error",
+                ex.getMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
@@ -37,8 +43,11 @@ public class GlobalExceptionHandler {
      * @return
      */
     @ExceptionHandler(OrderException.class)
-    public ResponseEntity<?> handleOrderException(OrderException e) {
-        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+    public ResponseEntity<?> handleOrderException(OrderException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "Order Error",
+                ex.getMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 }

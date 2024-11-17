@@ -2,6 +2,7 @@ package com.example.user_service.Service;
 
 import com.example.user_service.DTO.Request.ProductRequest;
 import com.example.user_service.DTO.Response.ProductResponse;
+import com.example.user_service.config.FeignConfig;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.util.List;
 
-@FeignClient(name = "product-service")
+@FeignClient(name = "product-service",configuration = FeignConfig.class)
 public interface ProductService {
 
     @RequestMapping(value = "/api/v1/product", method = RequestMethod.POST)

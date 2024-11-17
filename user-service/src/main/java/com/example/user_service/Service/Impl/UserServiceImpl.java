@@ -7,6 +7,7 @@ import com.example.user_service.Mapper.UserMapper;
 import com.example.user_service.Model.User;
 import com.example.user_service.Repository.UserRepository;
 import com.example.user_service.Service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,8 +15,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import static com.example.user_service.Validations.UserValidations.validateUserDetails;
+import static com.example.user_service.messages.UserMessages.*;
 
 @Service
+@Slf4j
 public class UserServiceImpl implements UserService {
 
     @Autowired
@@ -25,8 +28,6 @@ public class UserServiceImpl implements UserService {
     @Autowired
     PasswordEncoder passwordEncoder;
 
-    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
-
     /***
      * This method is used to get the user details based on username
      * @param username
@@ -35,8 +36,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse getUserDetails(String username) {
         User user = userRepository.findByUsername(username).orElseThrow(() -> {
-            logger.error("User not found");
-            return new UserException("User not found");
+            log.error(USERNAME_NOT_FOUND);
+            return new UserException(USERNAME_NOT_FOUND);
         });
         return userMapper.toUserResponse(user);
     }
@@ -52,9 +53,11 @@ public class UserServiceImpl implements UserService {
             validateUserDetails(request);
             User user = userMapper.toUser(request);
             userRepository.updateUserDetails(user.getFirstName(), user.getLastName(), user.getEmail(), user.getContactNumber(), user.getUsername());
+            log.info(USER_DETAILS_UPDATED);
             return getUserDetails(user.getUsername());
         } else {
-            throw new UserException("User not found");
+            log.error(USERNAME_NOT_FOUND);
+            throw new UserException(USERNAME_NOT_FOUND);
         }
     }
 
@@ -67,9 +70,10 @@ public class UserServiceImpl implements UserService {
     public UserResponse updatePassword(UserRequest request) {
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
             userRepository.updatePassword(request.getUsername(), passwordEncoder.encode(request.getPassword()));
+            log.info(PASSWORD_UPDATED);
             return getUserDetails(request.getUsername());
         } else {
-            throw new UserException("User not found");
+            throw new UserException(USERNAME_NOT_FOUND);
         }
     }
 }
