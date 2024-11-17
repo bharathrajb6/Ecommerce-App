@@ -22,7 +22,7 @@ public class CartServiceImpl implements CartService {
 
     @Autowired
     private CartRepository cartRepository;
-
+    
     @Autowired
     private CartItemRepository cartItemRepository;
 
@@ -76,5 +76,19 @@ public class CartServiceImpl implements CartService {
             throw new CartException("Failed to delete items: " + failedDeletes);
         }
         return "Items have been deleted successfully";
+    }
+
+    @Override
+    public boolean emptyCart(String username) {
+        Cart cart = cartRepository.findByUsername(username).orElseThrow(()->{
+            return new CartException("Username is not found.");
+        });
+        try {
+            cartItemRepository.deleteByCart(cart);
+            cartRepository.delete(cart);
+        } catch (Exception e) {
+            throw new CartException(e.getMessage());
+        }
+        return true;
     }
 }

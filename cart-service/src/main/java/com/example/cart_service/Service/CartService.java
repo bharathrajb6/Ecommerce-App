@@ -14,4 +14,6 @@ public interface CartService {
     CartResponse updateCartItems(CartItemsRequest request);
 
     String deleteCartItems(String username,List<String> productID);
+
+    boolean emptyCart(String username);
 }
