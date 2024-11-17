@@ -13,5 +13,5 @@ public interface CartService {
 
     CartResponse updateCartItems(CartItemsRequest request);
 
-    CartResponse deleteCartItems(List<String> productID);
+    String deleteCartItems(String username,List<String> productID);
 }

@@ -29,7 +29,7 @@ public class CartServiceHelper {
         boolean stocksPresent = checkIfProductsAreFound(cartRequest.getCartItemsList());
         if (stocksPresent) {
             Cart cart = cartMapper.toCart(cartRequest);
-            cart.setUsername("bharath");
+            cart.setUsername(cartRequest.getUsername());
             cart.setCartID(UUID.randomUUID().toString());
             cart.setCreatedAt(Timestamp.from(Instant.now()));
             cart.setUpdatedAt(Timestamp.from(Instant.now()));
@@ -71,4 +71,6 @@ public class CartServiceHelper {
                 }
         ).sum();
     }
+
+
 }

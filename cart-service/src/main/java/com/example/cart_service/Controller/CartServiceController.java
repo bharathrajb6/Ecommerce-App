@@ -31,8 +31,8 @@ public class CartServiceController {
         return cartService.updateCartItems(cartItemsRequest);
     }
 
-    @RequestMapping(value = "/cart", method = RequestMethod.DELETE)
-    public CartResponse deleteCartItems(@RequestBody List<String> prodIDs) {
-        return cartService.deleteCartItems(prodIDs);
+    @RequestMapping(value = "/cart/{username}", method = RequestMethod.DELETE)
+    public String deleteCartItems(@PathVariable String username, @RequestBody List<String> prodIDs) {
+        return cartService.deleteCartItems(username,prodIDs);
     }
 }
