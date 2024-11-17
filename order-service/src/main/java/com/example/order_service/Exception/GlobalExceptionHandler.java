@@ -18,7 +18,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(OrderException.class)
     public ResponseEntity<?> handleOrderException(OrderException exception, WebRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), exception.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Order Error", exception.getMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 }

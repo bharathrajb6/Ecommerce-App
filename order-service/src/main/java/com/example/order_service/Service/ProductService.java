@@ -21,9 +21,9 @@ public interface ProductService {
     @RequestMapping(value = "/api/v1/product/search/{criteria}", method = RequestMethod.GET)
     List<ProductResponse> searchProduct(@PathVariable String criteria);
 
-    @RequestMapping(value = "/api/v1/product/getStock/{prodID}", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/v1/product/{prodID}/stock", method = RequestMethod.GET)
     int getStock(@PathVariable String prodID);
 
-    @RequestMapping(value = "/api/v1/product/updateStock/{prodID}", method = RequestMethod.PUT)
+    @RequestMapping(value = "/api/v1/product/{prodID}/stock", method = RequestMethod.PUT)
     ProductResponse updateProductStock(@PathVariable String prodID, @RequestBody int newStock);
 }

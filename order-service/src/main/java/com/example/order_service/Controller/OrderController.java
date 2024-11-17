@@ -61,7 +61,7 @@ public class OrderController {
      * @param orderID
      * @return
      */
-    @RequestMapping(value = "/order/cancel/{orderID}", method = RequestMethod.PUT)
+    @RequestMapping(value = "/order/{orderID}/cancel", method = RequestMethod.PUT)
     public String cancelOrder(@PathVariable String orderID) {
         return orderService.cancelOrder(orderID);
     }
@@ -71,7 +71,7 @@ public class OrderController {
      * @param username
      * @return
      */
-    @RequestMapping(value = "/order/cancelled/{username}", method = RequestMethod.GET)
+    @RequestMapping(value = "/order/{username}/cancelled", method = RequestMethod.GET)
     public List<OrderResponse> getAllCancelledOrders(@PathVariable String username) {
         return orderService.getAllCancelledOrders(username);
     }

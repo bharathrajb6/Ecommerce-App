@@ -11,6 +11,7 @@ import com.example.order_service.Model.OrderStatus;
 import com.example.order_service.Model.Orders;
 import com.example.order_service.Service.ProductService;
 import feign.FeignException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +20,10 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import static com.example.order_service.messages.OrderMessages.*;
+
 @Service
+@Slf4j
 public class OrderHelper {
     @Autowired
     private OrderMapper orderMapper;
@@ -53,6 +57,7 @@ public class OrderHelper {
             item.setPrice((double) product.getPrice());
             item.setTotalPrice(item.getPrice() * item.getQuantity());
         }
+        log.info(ORDER_CREATED);
         return order;
     }
 
@@ -110,7 +115,9 @@ public class OrderHelper {
             try {
                 ProductResponse product = productService.getProduct(item.getProductId());
                 productService.updateProductStock(item.getProductId(), product.getStock() + item.getQuantity());
+                log.info(PRODUCT_UPDATED_AFTER_ORDER_CANCEL,product.getProdName());
             } catch (FeignException exception) {
+                log.error(UNABLE_UPDATE_PRODUCT_AFTER_ORDER_CANCEL,item.getProductId());
                 throw new OrderException(exception.getMessage());
             }
         }

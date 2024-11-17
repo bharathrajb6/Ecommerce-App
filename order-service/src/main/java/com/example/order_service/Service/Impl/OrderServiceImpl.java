@@ -13,6 +13,7 @@ import com.example.order_service.Repository.OrderRepository;
 import com.example.order_service.Service.MailService;
 import com.example.order_service.Service.OrderService;
 import com.example.order_service.Service.ProductService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +28,10 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import static com.example.order_service.messages.OrderMessages.*;
+
 @Service
+@Slf4j
 public class OrderServiceImpl implements OrderService, MailService {
     @Autowired
     private OrderRepository orderRepository;
@@ -51,6 +55,7 @@ public class OrderServiceImpl implements OrderService, MailService {
     public OrderResponse placeOrder(OrderRequest request) {
         Orders orders = orderHelper.generateOrder(request);
         orderRepository.save(orders);
+        log.info(ORDER_PLACED, orders.getOrderID());
         return getOrderDetails(orders.getOrderID());
     }
 
@@ -61,7 +66,10 @@ public class OrderServiceImpl implements OrderService, MailService {
      */
     @Override
     public OrderResponse getOrderDetails(String orderID) {
-        Orders orders = orderRepository.findById(orderID).orElse(null);
+        Orders orders = orderRepository.findById(orderID).orElseThrow(() -> {
+            return new OrderException(ORDER_NOT_FOUND_WITH_ID + orderID);
+        });
+        log.info(ORDER_FOUND_WITH_ID, orders.getOrderID());
         return orderMapper.toOrderResponse(orders);
     }
 
@@ -86,8 +94,10 @@ public class OrderServiceImpl implements OrderService, MailService {
         OrderStatus newOrderStatus = OrderStatus.valueOf(orderStatus);
         try {
             orderRepository.updateOrderStatus(newOrderStatus, Timestamp.from(Instant.now()), orderID);
+            log.info(ORDER_STATUS_UPDATED);
             return getOrderDetails(orderID);
         } catch (Exception e) {
+            log.error(UNABLE_TO_UPDATE_ORDER_STATUS);
             throw new OrderException("Unable to update order");
         }
     }
@@ -105,10 +115,11 @@ public class OrderServiceImpl implements OrderService, MailService {
             });
             orderHelper.updateProductAfterCancel(orders.getOrderItems());
             orderRepository.updateOrderStatus(OrderStatus.CANCELLED, Timestamp.from(Instant.now()), orderID);
-            return "Order has been cancelled successfully.";
+            log.info(ORDER_CANCELLED_SUCCESSFULLY + orderID);
+            return ORDER_CANCELLED_SUCCESSFULLY;
         } catch (Exception e) {
-            System.out.println(e.getMessage()+e.getCause());
-            throw new OrderException("Unable to cancel order");
+            log.error(UNABLE_TO_CANCEL_ORDER + e.getMessage());
+            throw new OrderException(UNABLE_TO_CANCEL_ORDER);
         }
     }
 
@@ -182,7 +193,7 @@ public class OrderServiceImpl implements OrderService, MailService {
             message.setText("This is a test mail");
             // Send email.
             Transport.send(message);
-            System.out.println("Mail successfully sent");
+            log.info(MAIL_SENT);
             return "Mail Sent";
         } catch (MessagingException e) {
             throw new OrderException(e.getMessage());
