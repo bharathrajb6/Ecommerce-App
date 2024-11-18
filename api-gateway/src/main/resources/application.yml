@@ -1,0 +1,28 @@
+server:
+  port: 9090
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: product-service
+          uri: http://localhost:8080
+          predicates:
+            - Path=/api/v1/product/**
+          default-filters:
+            - RewritePath=/api/v1/product/(?<segment>.*), /api/v1/product/${segment}
+
+        - id: user-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/v1/user/**
+          default-filters:
+            - RewritePath=/api/v1/user/(?<segment>.*), /api/v1/user/${segment}
+
+        - id: order-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/v1/order/**
+          default-filters:
+            - RewritePath=/api/v1/order/(?<segment>.*), /api/v1/order/${segment}
