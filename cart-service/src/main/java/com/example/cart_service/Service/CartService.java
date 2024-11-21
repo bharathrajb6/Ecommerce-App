@@ -1,6 +1,5 @@
 package com.example.cart_service.Service;
 
-import com.example.cart_service.DTO.Request.CartItemsRequest;
 import com.example.cart_service.DTO.Request.CartRequest;
 import com.example.cart_service.DTO.Response.CartResponse;
 
@@ -11,9 +10,11 @@ public interface CartService {
 
     CartResponse getCartItems(String username);
 
-    CartResponse updateCartItems(CartItemsRequest request);
+    String deleteCartItems(String username, List<String> productID);
 
-    String deleteCartItems(String username,List<String> productID);
+    String emptyCart(String username);
 
-    boolean emptyCart(String username);
+    double getTotalCartAmount(String username);
+
+    CartResponse addCartItemsToExistingUser(CartRequest cartRequest);
 }
