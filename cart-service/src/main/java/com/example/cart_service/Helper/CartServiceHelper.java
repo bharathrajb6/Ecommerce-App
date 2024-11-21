@@ -19,6 +19,9 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.example.cart_service.Messages.CartLogMessages.CART_ITEMS_SAVED_SUCCESSFULLY;
+import static com.example.cart_service.Messages.CartLogMessages.UNABLE_TO_SAVE_CART_ITEM_FROM_CART;
+
 @Component
 @Slf4j
 public class CartServiceHelper {
@@ -36,6 +39,7 @@ public class CartServiceHelper {
 
     /**
      * This method will create the cart object for the new user
+     *
      * @param cartRequest
      * @return
      */
@@ -92,6 +96,7 @@ public class CartServiceHelper {
 
     /**
      * This method will update the total cart amount after adding the items to cart
+     *
      * @param cart
      */
     public void updateCartAmount(Cart cart) {
@@ -109,6 +114,7 @@ public class CartServiceHelper {
 
     /**
      * This method separate the products into existing products and new products
+     *
      * @param cart
      * @param cartRequest
      * @return
@@ -131,13 +137,14 @@ public class CartServiceHelper {
 
     /**
      * This method will add the products into cartItems DB.If products are already there then it will update thw quantity.If the products are not there then it will create a new entry.
+     *
      * @param productIDs
      * @param cartRequest
      * @param cart
      * @param type
      */
-    public void addProductsToCart(List<String> productIDs, CartRequest cartRequest, Cart cart, String type) {
-        if (type.equals("SAME")) {
+    public void addProductsToCart(List<String> productIDs, CartRequest cartRequest, Cart cart, String productType) {
+        if (productType.equals("SAME")) {
             for (String productID : productIDs) {
                 Optional<CartItemsRequest> cartItemsRequest = cartRequest.getCartItemsList().stream().filter(prodID -> prodID.equals(productID)).findFirst();
                 if (cartItemsRequest.isPresent()) {
@@ -147,11 +154,11 @@ public class CartServiceHelper {
                     cartItemRepository.updateCartProductQuantity(cartItemsRequest.get().getQuantity(), totalPrice, cartItems.getCartItemID());
                 }
             }
-        } else if (type.equals("DIFF")) {
+        } else if (productType.equals("DIFF")) {
             List<CartItems> cartItemList = new ArrayList<>();
-            for(String prodID : productIDs){
+            for (String prodID : productIDs) {
                 Optional<CartItemsRequest> cartItemsRequest = cartRequest.getCartItemsList().stream().filter(productID -> productID.equals(prodID)).findFirst();
-                if(cartItemsRequest.isPresent()){
+                if (cartItemsRequest.isPresent()) {
                     CartItems cartItem = new CartItems();
                     cartItem.setCartItemID(UUID.randomUUID().toString());
                     cartItem.setProdID(cartItemsRequest.get().getProdID());
@@ -166,9 +173,9 @@ public class CartServiceHelper {
                 cartItemRepository.saveAll(cartItemList);
                 updateCartAmount(cart);
                 cartRepository.updateByLastUpdateTime(Timestamp.from(Instant.now()), cartRequest.getUsername());
-                log.info("Items are added successfully to cart");
+                log.info(CART_ITEMS_SAVED_SUCCESSFULLY);
             } catch (Exception exception) {
-                log.error("Unable to save the items to cart - {}", exception.getMessage());
+                log.error(UNABLE_TO_SAVE_CART_ITEM_FROM_CART, exception.getMessage());
                 throw new CartException(exception.getMessage());
             }
         }

@@ -10,7 +10,7 @@ public interface CartService {
 
     CartResponse getCartItems(String username);
 
-    String deleteCartItems(String username, List<String> productID);
+    CartResponse deleteCartItems(String username, List<String> productID);
 
     String emptyCart(String username);
 

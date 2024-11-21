@@ -20,6 +20,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.example.cart_service.Messages.CartExceptionMessages.EXCEPTION_CART_ITEMS_NOT_FOUND_FOR_USER;
+import static com.example.cart_service.Messages.CartExceptionMessages.EXCEPTION_FAILED_TO_DELETE_ITEMS_FROM_CART;
+import static com.example.cart_service.Messages.CartLogMessages.*;
+
 @Service
 @Slf4j
 public class CartServiceImpl implements CartService {
@@ -36,6 +40,8 @@ public class CartServiceImpl implements CartService {
     @Autowired
     private CartMapper cartMapper;
 
+    private static final String ITEMS_DELETED_SUCCESSFULLY = "Items have been deleted successfully";
+
     /**
      * This method will add the items to cart
      *
@@ -50,10 +56,10 @@ public class CartServiceImpl implements CartService {
             Cart cart = cartServiceHelper.addItemsToCart(cartRequest);
             try {
                 cartRepository.save(cart);
-                log.info("Cart items are saved successfully");
+                log.info(CART_ITEMS_SAVED_SUCCESSFULLY);
                 return cartMapper.toCartResponse(cart);
             } catch (Exception exception) {
-                log.error("Unable to save the cart items");
+                log.error(UNABLE_TO_SAVE_CART_ITEMS);
                 throw new CartException(exception.getMessage(), exception.getCause());
             }
         } else {
@@ -70,8 +76,8 @@ public class CartServiceImpl implements CartService {
     @Override
     public CartResponse getCartItems(String username) {
         Cart cart = cartRepository.findByUsername(username).orElseThrow(() -> {
-            log.error("Cart items are not found the user {}", username);
-            return new CartException("Cart Items not found.");
+            log.error(CART_ITEMS_NOT_FOUND_FOR_USER, username);
+            return new CartException(EXCEPTION_CART_ITEMS_NOT_FOUND_FOR_USER + username);
         });
         return cartMapper.toCartResponse(cart);
     }
@@ -85,29 +91,29 @@ public class CartServiceImpl implements CartService {
      */
     @Override
     @Transactional
-    public String deleteCartItems(String username, List<String> productIDs) {
+    public CartResponse deleteCartItems(String username, List<String> productIDs) {
         Cart cart = cartRepository.findByUsername(username).orElseThrow(() -> {
-            log.error("Cart items are not found the user {}", username);
-            return new CartException("Cart Items not found.");
+            log.error(CART_ITEMS_NOT_FOUND_FOR_USER, username);
+            return new CartException(EXCEPTION_CART_ITEMS_NOT_FOUND_FOR_USER + username);
         });
         List<String> failedDeletes = productIDs.stream().filter(productID -> {
             try {
                 cartItemRepository.deleteProductFromCart(cart, productID);
-                log.info("Item {} is deleted from cart", productID);
+                log.info(CART_ITEMS_DELETED_FROM_CART, productID);
                 return false; // Successful delete
             } catch (Exception e) {
-                log.error("Unable to delete the item {} from cart. {}", productID, e.getMessage());
+                log.error(UNABLE_TO_DELETE_CART_ITEM_FROM_CART, productID, e.getMessage());
                 return true; // Failed delete
             }
         }).collect(Collectors.toList());
         if (!failedDeletes.isEmpty()) {
-            log.error("Failed to delete items : {}", failedDeletes);
-            throw new CartException("Failed to delete items: " + failedDeletes);
+            log.error(FAILED_TO_DELETE_CART_ITEMS, failedDeletes);
+            throw new CartException(EXCEPTION_FAILED_TO_DELETE_ITEMS_FROM_CART + failedDeletes);
         }
         cartServiceHelper.updateCartAmount(cart);
         cartRepository.updateByLastUpdateTime(Timestamp.from(Instant.now()), username);
-        log.info("Total amount of the cart is updated successfully");
-        return "Items have been deleted successfully";
+        log.info(UPDATED_TOTAL_AMOUNT_CART);
+        return getCartItems(username);
     }
 
     /**
@@ -120,18 +126,18 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public String emptyCart(String username) {
         Cart cart = cartRepository.findByUsername(username).orElseThrow(() -> {
-            log.error("Cart items are not found for the user {}", username);
-            return new CartException("Username is not found.");
+            log.error(CART_ITEMS_NOT_FOUND_FOR_USER, username);
+            return new CartException(EXCEPTION_CART_ITEMS_NOT_FOUND_FOR_USER + username);
         });
         try {
             cartItemRepository.deleteByCart(cart);
             cartRepository.delete(cart);
-            log.info("Cart Items are deleted successfully");
+            log.info(ITEMS_DELETED_SUCCESSFULLY);
         } catch (Exception exception) {
-            log.error("Unable to delete the cart items. {}", exception.getMessage());
+            log.error(FAILED_TO_DELETE_CART_ITEMS, exception.getMessage());
             throw new CartException(exception.getMessage());
         }
-        return "Cart is empty now.";
+        return ITEMS_DELETED_SUCCESSFULLY;
     }
 
     /**
@@ -143,8 +149,8 @@ public class CartServiceImpl implements CartService {
     @Override
     public double getTotalCartAmount(String username) {
         Cart cart = cartRepository.findByUsername(username).orElseThrow(() -> {
-            log.error("Cart items are not found for the user {}", username);
-            return new CartException("User not found");
+            log.error(CART_ITEMS_NOT_FOUND_FOR_USER, username);
+            return new CartException(EXCEPTION_CART_ITEMS_NOT_FOUND_FOR_USER + username);
         });
         return cart.getTotalAmount();
     }
@@ -158,8 +164,8 @@ public class CartServiceImpl implements CartService {
     @Override
     public CartResponse addCartItemsToExistingUser(CartRequest cartRequest) {
         Cart cart = cartRepository.findByUsername(cartRequest.getUsername()).orElseThrow(() -> {
-            log.error("Cart items are not found for the user {}", cartRequest.getUsername());
-            return new CartException("Cart items not found for this user");
+            log.error(CART_ITEMS_NOT_FOUND_FOR_USER, cartRequest.getUsername());
+            return new CartException(EXCEPTION_CART_ITEMS_NOT_FOUND_FOR_USER + cartRequest.getUsername());
         });
 
         Map<String, List<String>> productIDs = cartServiceHelper.getExistingAndNewProductFromRequest(cart, cartRequest);
