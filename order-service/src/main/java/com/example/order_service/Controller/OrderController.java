@@ -6,7 +6,6 @@ import com.example.order_service.Service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.sql.Timestamp;
 import java.util.List;
 
 @RestController
@@ -31,7 +30,7 @@ public class OrderController {
      * @param orderID
      * @return
      */
-    @RequestMapping(value = "/order/{orderID}", method = RequestMethod.GET)
+//    @RequestMapping(value = "/order/{orderID}", method = RequestMethod.GET)
     public OrderResponse getOrderDetails(@PathVariable String orderID) {
         return orderService.getOrderDetails(orderID);
     }
@@ -72,8 +71,8 @@ public class OrderController {
      * @return
      */
     @RequestMapping(value = "/order/{username}/cancelled", method = RequestMethod.GET)
-    public List<OrderResponse> getAllCancelledOrders(@PathVariable String username) {
-        return orderService.getAllCancelledOrders(username);
+    public List<OrderResponse> getAllCancelledOrdersForUser(@PathVariable String username) {
+        return orderService.getAllCancelledOrdersForUser(username);
     }
 
     /***
@@ -94,5 +93,15 @@ public class OrderController {
     @RequestMapping(value = "/order/search/{username}", method = RequestMethod.GET)
     public List<OrderResponse> getAllOrdersByUserName(@PathVariable String username) {
         return orderService.getAllOrdersByUserName(username);
+    }
+
+    @RequestMapping(value = "/order/totalOrders", method = RequestMethod.GET)
+    public int getTotalOrders() {
+        return orderService.getTotalOrders();
+    }
+
+    @RequestMapping(value = "/order/cancelled", method = RequestMethod.GET)
+    public int getAllCancelledOrders() {
+        return orderService.getAllCancelledOrders();
     }
 }

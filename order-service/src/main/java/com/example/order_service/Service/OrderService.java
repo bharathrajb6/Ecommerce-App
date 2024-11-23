@@ -18,7 +18,7 @@ public interface OrderService {
 
     String cancelOrder(String orderID);
 
-    List<OrderResponse> getAllCancelledOrders(String username);
+    List<OrderResponse> getAllCancelledOrdersForUser(String username);
 
     OrderResponse getOrderStatusByTrackNumber(String trackingNumber);
 
@@ -26,4 +26,7 @@ public interface OrderService {
 
     List<OrderResponse> searchOrdersByCreatedDate(Timestamp criteria);
 
+    int getTotalOrders();
+
+    int getAllCancelledOrders();
 }

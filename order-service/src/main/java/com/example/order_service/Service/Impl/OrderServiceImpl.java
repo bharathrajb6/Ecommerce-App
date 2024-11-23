@@ -129,8 +129,8 @@ public class OrderServiceImpl implements OrderService, MailService {
      * @return
      */
     @Override
-    public List<OrderResponse> getAllCancelledOrders(String username) {
-        List<Orders> ordersList = orderRepository.getAllCancelledOrders(OrderStatus.CANCELLED, username);
+    public List<OrderResponse> getAllCancelledOrdersForUser(String username) {
+        List<Orders> ordersList = orderRepository.getAllCancelledOrdersForUser(OrderStatus.CANCELLED, username);
         return orderMapper.toOrderResponseList(ordersList);
     }
 
@@ -163,6 +163,17 @@ public class OrderServiceImpl implements OrderService, MailService {
     public List<OrderResponse> searchOrdersByCreatedDate(Timestamp criteria) {
         return orderMapper.toOrderResponseList(orderRepository.searchOrdersByCreatedDate(criteria));
     }
+
+    @Override
+    public int getTotalOrders() {
+        return orderRepository.findAll().size();
+    }
+
+    @Override
+    public int getAllCancelledOrders() {
+        return orderRepository.getAllCancelledOrders(OrderStatus.CANCELLED).size();
+    }
+
 
     /***
      * This method is used to send the mail to user email after placing the order.
