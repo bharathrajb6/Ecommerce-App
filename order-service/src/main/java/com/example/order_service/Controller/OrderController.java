@@ -102,11 +102,9 @@ public class OrderController {
         return orderService.getTotalOrders();
     }
 
-    @RequestMapping(value = "/order/filter",method = RequestMethod.GET)
-    public List<OrderResponse> getOrdersFilter(@RequestParam("start") String start,@RequestParam("end") String end){
-        LocalDate startDate = LocalDate.parse(start);
-        LocalDate endDate = LocalDate.parse(end);
-        return orderService.getOrderFilter(startDate, endDate);
+    @RequestMapping(value = "/order/filter", method = RequestMethod.GET)
+    public List<OrderResponse> getOrdersFilter(@RequestParam("start") String start, @RequestParam("end") String end) {
+        return orderService.getOrderFilter(start, end);
     }
 
     @RequestMapping(value = "/order/cancelled", method = RequestMethod.GET)
@@ -121,8 +119,6 @@ public class OrderController {
 
     @RequestMapping(value = "/order/revenue/filter", method = RequestMethod.GET)
     public double getTotalRevenueFilter(@RequestParam("start") String start, @RequestParam("end") String end) {
-        LocalDate startDate = LocalDate.parse(start);
-        LocalDate endDate = LocalDate.parse(end);
-        return orderService.getTotalRevenueFilter(startDate, endDate);
+        return orderService.getTotalRevenueFilter(start, end);
     }
 }

@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -172,9 +173,9 @@ public class OrderServiceImpl implements OrderService, MailService {
     }
 
     @Override
-    public List<OrderResponse> getOrderFilter(LocalDate startDate, LocalDate endDate) {
+    public List<OrderResponse> getOrderFilter(String start, String end) {
         List<Orders> ordersList = orderRepository.findAll();
-        List<Orders> filteredOrders = orderHelper.filterOrders(startDate, endDate, ordersList);
+        List<Orders> filteredOrders = orderHelper.filterOrders(start, end, ordersList);
         return orderMapper.toOrderResponseList(filteredOrders);
     }
 
@@ -227,9 +228,9 @@ public class OrderServiceImpl implements OrderService, MailService {
     }
 
     @Override
-    public double getTotalRevenueFilter(LocalDate startDate, LocalDate endDate) {
+    public double getTotalRevenueFilter(String start, String end) {
         List<Orders> ordersList = orderRepository.findAll();
-        List<Orders> filteredOrders = orderHelper.filterOrders(startDate, endDate, ordersList);
+        List<Orders> filteredOrders = orderHelper.filterOrders(start, end, ordersList);
         return filteredOrders.stream().mapToDouble(Orders::getTotalAmount).sum();
     }
 }

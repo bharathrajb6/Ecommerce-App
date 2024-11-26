@@ -30,11 +30,11 @@ public interface OrderService {
 
     int getTotalOrders();
 
-    List<OrderResponse> getOrderFilter(LocalDate startDate, LocalDate endDate);
+    List<OrderResponse> getOrderFilter(String startDate, String endDate);
 
     int getAllCancelledOrders();
 
     double getTotalRevenue();
 
-    double getTotalRevenueFilter(LocalDate startDate, LocalDate endDate);
+    double getTotalRevenueFilter(String startDate, String endDate);
 }

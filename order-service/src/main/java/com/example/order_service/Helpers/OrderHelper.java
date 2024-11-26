@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -118,20 +119,28 @@ public class OrderHelper {
             try {
                 ProductResponse product = productService.getProduct(item.getProductId());
                 productService.updateProductStock(item.getProductId(), product.getStock() + item.getQuantity());
-                log.info(PRODUCT_UPDATED_AFTER_ORDER_CANCEL,product.getProdName());
+                log.info(PRODUCT_UPDATED_AFTER_ORDER_CANCEL, product.getProdName());
             } catch (FeignException exception) {
-                log.error(UNABLE_UPDATE_PRODUCT_AFTER_ORDER_CANCEL,item.getProductId());
+                log.error(UNABLE_UPDATE_PRODUCT_AFTER_ORDER_CANCEL, item.getProductId());
                 throw new OrderException(exception.getMessage());
             }
         }
     }
 
-    public List<Orders> filterOrders(LocalDate startDate,LocalDate endDate,List<Orders> ordersList){
+    public List<Orders> filterOrders(String start, String end, List<Orders> ordersList) {
+        LocalDate startDate;
+        LocalDate endDate;
+        try {
+            startDate = LocalDate.parse(start);
+            endDate = LocalDate.parse(end);
+        } catch (DateTimeParseException parseException) {
+            throw new OrderException(parseException.getMessage());
+        }
         List<Orders> filteredOrderList = new ArrayList<>();
-        for(Orders orders: ordersList){
+        for (Orders orders : ordersList) {
             Timestamp orderTimeStamp = orders.getCreatedAt();
             LocalDate date = orderTimeStamp.toLocalDateTime().toLocalDate();
-            if((date.isAfter(startDate) && date.isBefore(endDate)) || date.equals(startDate) || date.equals(endDate)){
+            if ((date.isAfter(startDate) && date.isBefore(endDate)) || date.equals(startDate) || date.equals(endDate)) {
                 filteredOrderList.add(orders);
             }
         }
