@@ -6,6 +6,8 @@ import com.example.order_service.Service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -100,8 +102,27 @@ public class OrderController {
         return orderService.getTotalOrders();
     }
 
+    @RequestMapping(value = "/order/filter",method = RequestMethod.GET)
+    public List<OrderResponse> getOrdersFilter(@RequestParam("start") String start,@RequestParam("end") String end){
+        LocalDate startDate = LocalDate.parse(start);
+        LocalDate endDate = LocalDate.parse(end);
+        return orderService.getOrderFilter(startDate, endDate);
+    }
+
     @RequestMapping(value = "/order/cancelled", method = RequestMethod.GET)
     public int getAllCancelledOrders() {
         return orderService.getAllCancelledOrders();
+    }
+
+    @RequestMapping(value = "/order/revenue", method = RequestMethod.GET)
+    public double getTotalRevenue() {
+        return orderService.getTotalRevenue();
+    }
+
+    @RequestMapping(value = "/order/revenue/filter", method = RequestMethod.GET)
+    public double getTotalRevenueFilter(@RequestParam("start") String start, @RequestParam("end") String end) {
+        LocalDate startDate = LocalDate.parse(start);
+        LocalDate endDate = LocalDate.parse(end);
+        return orderService.getTotalRevenueFilter(startDate, endDate);
     }
 }

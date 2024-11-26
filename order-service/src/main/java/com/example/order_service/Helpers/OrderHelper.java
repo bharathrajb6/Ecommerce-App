@@ -9,6 +9,7 @@ import com.example.order_service.Mapper.OrderMapper;
 import com.example.order_service.Model.OrderItems;
 import com.example.order_service.Model.OrderStatus;
 import com.example.order_service.Model.Orders;
+import com.example.order_service.Repository.OrderRepository;
 import com.example.order_service.Service.ProductService;
 import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -121,5 +124,17 @@ public class OrderHelper {
                 throw new OrderException(exception.getMessage());
             }
         }
+    }
+
+    public List<Orders> filterOrders(LocalDate startDate,LocalDate endDate,List<Orders> ordersList){
+        List<Orders> filteredOrderList = new ArrayList<>();
+        for(Orders orders: ordersList){
+            Timestamp orderTimeStamp = orders.getCreatedAt();
+            LocalDate date = orderTimeStamp.toLocalDateTime().toLocalDate();
+            if((date.isAfter(startDate) && date.isBefore(endDate)) || date.equals(startDate) || date.equals(endDate)){
+                filteredOrderList.add(orders);
+            }
+        }
+        return filteredOrderList;
     }
 }

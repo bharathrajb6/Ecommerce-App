@@ -4,6 +4,8 @@ import com.example.order_service.DTO.Request.OrderRequest;
 import com.example.order_service.DTO.Response.OrderResponse;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface OrderService {
@@ -28,5 +30,11 @@ public interface OrderService {
 
     int getTotalOrders();
 
+    List<OrderResponse> getOrderFilter(LocalDate startDate, LocalDate endDate);
+
     int getAllCancelledOrders();
+
+    double getTotalRevenue();
+
+    double getTotalRevenueFilter(LocalDate startDate, LocalDate endDate);
 }

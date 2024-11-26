@@ -19,6 +19,8 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import javax.mail.Message;
@@ -170,6 +172,13 @@ public class OrderServiceImpl implements OrderService, MailService {
     }
 
     @Override
+    public List<OrderResponse> getOrderFilter(LocalDate startDate, LocalDate endDate) {
+        List<Orders> ordersList = orderRepository.findAll();
+        List<Orders> filteredOrders = orderHelper.filterOrders(startDate, endDate, ordersList);
+        return orderMapper.toOrderResponseList(filteredOrders);
+    }
+
+    @Override
     public int getAllCancelledOrders() {
         return orderRepository.getAllCancelledOrders(OrderStatus.CANCELLED).size();
     }
@@ -209,5 +218,18 @@ public class OrderServiceImpl implements OrderService, MailService {
         } catch (MessagingException e) {
             throw new OrderException(e.getMessage());
         }
+    }
+
+    @Override
+    public double getTotalRevenue() {
+        List<Orders> ordersList = orderRepository.findAll();
+        return ordersList.stream().mapToDouble(Orders::getTotalAmount).sum();
+    }
+
+    @Override
+    public double getTotalRevenueFilter(LocalDate startDate, LocalDate endDate) {
+        List<Orders> ordersList = orderRepository.findAll();
+        List<Orders> filteredOrders = orderHelper.filterOrders(startDate, endDate, ordersList);
+        return filteredOrders.stream().mapToDouble(Orders::getTotalAmount).sum();
     }
 }
