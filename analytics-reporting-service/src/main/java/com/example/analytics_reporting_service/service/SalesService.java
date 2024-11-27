@@ -7,4 +7,13 @@ import org.springframework.stereotype.Service;
 public interface SalesService {
 
     SalesResponse getTotalNumberOfSales();
+
+    SalesResponse getOrdersFilter(String start, String end);
+
+    SalesResponse getTotalRevenue();
+
+    SalesResponse getTotalRevenueFilter(String start, String end);
+
+    SalesResponse getAllCancelledOrders();
+
 }

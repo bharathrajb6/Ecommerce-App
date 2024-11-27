@@ -1,9 +1,12 @@
 package com.example.analytics_reporting_service.model;
 
+import com.example.analytics_reporting_service.dto.response.OrderResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -11,5 +14,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class Sales {
     private int totalSales;
-    private int totalRevenue;
+    private double totalRevenue;
+    private List<OrderResponse> ordersList;
 }
