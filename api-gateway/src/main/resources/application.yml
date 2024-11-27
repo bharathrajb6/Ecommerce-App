@@ -26,3 +26,10 @@ spring:
             - Path=/api/v1/order/**
           default-filters:
             - RewritePath=/api/v1/order/(?<segment>.*), /api/v1/order/${segment}
+
+        - id: analytics-reporting-service
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/v1/report/**
+          default-filters:
+            - RewritePath=/api/v1/report/(?<segment>.*), /api/v1/report/${segment}

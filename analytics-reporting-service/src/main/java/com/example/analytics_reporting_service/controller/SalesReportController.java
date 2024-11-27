@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Date;
 
 @RestController
 @RequestMapping("/api/v1/report/")
@@ -23,14 +22,24 @@ public class SalesReportController {
         return salesService.getTotalNumberOfSales();
     }
 
-    @RequestMapping(value = "/sales/revenue", method = RequestMethod.GET)
-    public SalesResponse getTotalRevenue() {
-        return new SalesResponse();
+    @RequestMapping(value = "/sales/filter", method = RequestMethod.GET)
+    public SalesResponse getSalesFilter(@RequestParam("start") String start, @RequestParam("end") String end) {
+        return salesService.getOrdersFilter(start, end);
     }
 
-    @RequestMapping(value = "/sales/orders", method = RequestMethod.GET)
-    public SalesResponse SalesResponse() {
-        return new SalesResponse();
+    @RequestMapping(value = "/sales/revenue", method = RequestMethod.GET)
+    public SalesResponse getTotalRevenue() {
+        return salesService.getTotalRevenue();
+    }
+
+    @RequestMapping(value = "/sales/revenue/filter", method = RequestMethod.GET)
+    public SalesResponse getTotalRevenueFilter(@RequestParam("start") String start, @RequestParam("end") String end) {
+        return salesService.getTotalRevenueFilter(start, end);
+    }
+
+    @RequestMapping(value = "/sales/order/cancelled", method = RequestMethod.GET)
+    public SalesResponse getTotalRevenueFilter() {
+        return salesService.getAllCancelledOrders();
     }
 
 }
