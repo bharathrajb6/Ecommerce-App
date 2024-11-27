@@ -48,7 +48,7 @@ public interface CartItemRepository extends JpaRepository<CartItems, String> {
      * @param prodID
      * @return
      */
-    @Query("SELECT Cart c where c.cart = ?1,c.prodID = ?2")
+    @Query("SELECT c FROM CartItems c where c.cart = ?1 AND c.prodID = ?2")
     CartItems findByProductIDAndCart(Cart cart, String prodID);
 
 
@@ -61,6 +61,6 @@ public interface CartItemRepository extends JpaRepository<CartItems, String> {
      */
     @Modifying
     @Transactional
-    @Query("UPDATE CartItems c SET c.quantity = ?1,c.totalPrice = ?2 where c.cartItemID = cartItemId")
+    @Query("UPDATE CartItems c SET c.quantity = ?1,c.totalPrice = ?2 where c.cartItemID = ?3")
     void updateCartProductQuantity(int quantity, double totalPrice, String cartItemId);
 }

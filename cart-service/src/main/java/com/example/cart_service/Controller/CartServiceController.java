@@ -3,6 +3,7 @@ package com.example.cart_service.Controller;
 import com.example.cart_service.DTO.Request.CartRequest;
 import com.example.cart_service.DTO.Response.CartResponse;
 import com.example.cart_service.Service.CartService;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +22,7 @@ public class CartServiceController {
      * @param cartRequest
      * @return
      */
+    @Operation(summary = "Add Items to cart", description = "Add items to cart")
     @RequestMapping(value = "/cart", method = RequestMethod.POST)
     public CartResponse addCartItem(@RequestBody CartRequest cartRequest) {
         return cartService.addCartItems(cartRequest);
@@ -32,6 +34,7 @@ public class CartServiceController {
      * @param username
      * @return
      */
+    @Operation(summary = "Get Cart Items", description = "Get Cart Items")
     @RequestMapping(value = "/cart/{username}", method = RequestMethod.GET)
     public CartResponse getCartItems(@PathVariable String username) {
         return cartService.getCartItems(username);
@@ -44,6 +47,7 @@ public class CartServiceController {
      * @param prodIDs
      * @return
      */
+    @Operation(summary = "Delete Cart Items", description = "Delete the items from cart")
     @RequestMapping(value = "/cart/{username}", method = RequestMethod.DELETE)
     public CartResponse deleteCartItems(@PathVariable String username, @RequestBody List<String> prodIDs) {
         return cartService.deleteCartItems(username, prodIDs);
@@ -55,6 +59,7 @@ public class CartServiceController {
      * @param username
      * @return
      */
+    @Operation(summary = "Clear Cart", description = "Clear all items from cart")
     @RequestMapping(value = "/cart/{username}/clear", method = RequestMethod.DELETE)
     public String emptyCart(@PathVariable String username) {
         return cartService.emptyCart(username);
@@ -66,6 +71,7 @@ public class CartServiceController {
      * @param username
      * @return
      */
+    @Operation(summary = "Get Total Cart Amount", description = "Get total cart amount")
     @RequestMapping(value = "/cart/{username}/totalCartAmount", method = RequestMethod.GET)
     public double getTotalCartAmount(String username) {
         return cartService.getTotalCartAmount(username);
