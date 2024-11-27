@@ -5,6 +5,7 @@ import com.example.product_service.DTO.Response.ApiResponse;
 import com.example.product_service.DTO.Response.CategoryResponse;
 import com.example.product_service.Model.Category;
 import com.example.product_service.Service.CategoryService;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +23,7 @@ public class CategoryController {
      * @param request
      * @return
      */
+    @Operation(summary = "Add Category", description = "Add category to catalog")
     @RequestMapping(value = "/category", method = RequestMethod.POST)
     public ApiResponse<CategoryResponse> addCategory(@RequestBody CategoryRequest request) {
         return ApiResponse.<CategoryResponse>builder().result(categoryService.addCategory(request)).build();
@@ -32,6 +34,7 @@ public class CategoryController {
      * @param value
      * @return
      */
+    @Operation(summary = "Get Category", description = "Get category details from catalog")
     @RequestMapping(value = "/category/{value}", method = RequestMethod.GET)
     public ApiResponse<CategoryResponse> getCategory(@PathVariable String value) {
         return ApiResponse.<CategoryResponse>builder().result(categoryService.getCategory(value)).build();
@@ -41,6 +44,7 @@ public class CategoryController {
      * This method is responsible for handling GET requests to fetch all category details.
      * @return
      */
+    @Operation(summary = "Get All Categories", description = "Get all categories from catalog")
     @RequestMapping(value = "/category", method = RequestMethod.GET)
     public ApiResponse<List<CategoryResponse>> getAllCategories() {
         return ApiResponse.<List<CategoryResponse>>builder().result(categoryService.getAllCategories()).build();
@@ -52,6 +56,7 @@ public class CategoryController {
      * @param category
      * @return
      */
+    @Operation(summary = "Update Category", description = "Update category details in catalog")
     @RequestMapping(value = "/category/{categoryID}", method = RequestMethod.PUT)
     public ApiResponse<CategoryResponse> updateCategory(@PathVariable String categoryId, @RequestBody Category category) {
         return ApiResponse.<CategoryResponse>builder().result(categoryService.updateCategory(categoryId, CategoryRequest.builder().build())).build();
@@ -62,6 +67,7 @@ public class CategoryController {
      * @param value
      * @return
      */
+    @Operation(summary = "Delete Category", description = "Delete the category from catalog")
     @RequestMapping(value = "/category/{value}", method = RequestMethod.DELETE)
     public ApiResponse<CategoryResponse> deleteCategory(@PathVariable String value) {
         return ApiResponse.<CategoryResponse>builder().message(categoryService.deleteCategory(value)).build();

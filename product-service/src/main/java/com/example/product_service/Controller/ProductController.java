@@ -1,9 +1,9 @@
 package com.example.product_service.Controller;
 
 import com.example.product_service.DTO.Request.ProductRequest;
-import com.example.product_service.DTO.Response.ApiResponse;
 import com.example.product_service.DTO.Response.ProductResponse;
 import com.example.product_service.Service.ProductService;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +21,7 @@ public class ProductController {
      * @param request
      * @return
      */
+    @Operation(summary = "Add Product", description = "Adds a new product to product catalog")
     @RequestMapping(value = "/product", method = RequestMethod.POST)
     public ProductResponse addProduct(@RequestBody ProductRequest request) {
         return productService.addProduct(request);
@@ -28,42 +29,46 @@ public class ProductController {
 
     /***
      * This method is responsible for handling GET requests to get a product by its ID.
-     * @param value
+     * @param productID
      * @return
      */
-    @RequestMapping(value = "/product/{value}", method = RequestMethod.GET)
-    public ProductResponse getProducts(@PathVariable String value) {
-        return productService.getProduct(value);
+    @Operation(summary = "Get Product", description = "Get the product from catalog based on product ID")
+    @RequestMapping(value = "/product/{productID}", method = RequestMethod.GET)
+    public ProductResponse getProducts(@PathVariable String productID) {
+        return productService.getProduct(productID);
     }
 
     /***
      * This method is responsible for handling GET requests to get all products.
      * @return
      */
+    @Operation(summary = "Get All Products", description = "Get all products from catalog")
     @RequestMapping(value = "/product", method = RequestMethod.GET)
     public List<ProductResponse> getAllProducts() {
         return productService.getAllProducts();
     }
 
-    /***
+    /**
      * This method is responsible for handling PUT requests to update a product.
-     * @param prodID
+     * @param productID
      * @param request
      * @return
      */
+    @Operation(summary = "Update Product", description = "Update the product in catalog")
     @RequestMapping(value = "/product/{productID}", method = RequestMethod.PUT)
-    public ProductResponse updateProduct(@PathVariable String prodID, @RequestBody ProductRequest request) {
-        return productService.updateProduct(prodID, request);
+    public ProductResponse updateProduct(@PathVariable String productID, @RequestBody ProductRequest request) {
+        return productService.updateProduct(productID, request);
     }
 
     /***
      * This method is responsible for handling DELETE requests to delete a product.
-     * @param value
+     * @param productID
      * @return
      */
-    @RequestMapping(value = "/product/{value}", method = RequestMethod.DELETE)
-    public String deleteProduct(@PathVariable String value) {
-        return productService.deleteProduct(value);
+    @Operation(summary = "Delete Product", description = "Delete the product from catalog")
+    @RequestMapping(value = "/product/{productID}", method = RequestMethod.DELETE)
+    public String deleteProduct(@PathVariable String productID) {
+        return productService.deleteProduct(productID);
     }
 
     /***
@@ -71,19 +76,22 @@ public class ProductController {
      * @param criteria
      * @return
      */
+    @Operation(summary = "Search Product", description = "Search product in catalog")
     @RequestMapping(value = "/product/search/{criteria}", method = RequestMethod.GET)
     public List<ProductResponse> searchProduct(@PathVariable String criteria) {
         return productService.searchProduct(criteria);
     }
 
-    @RequestMapping(value = "/product/{prodID}/stock", method = RequestMethod.GET)
-    public int getStock(@PathVariable String prodID) {
-        return productService.getProductStock(prodID);
+    @Operation(summary = "Get Product Stock", description = "Get the product stock from catalog")
+    @RequestMapping(value = "/product/{productID}/stock", method = RequestMethod.GET)
+    public int getStock(@PathVariable String productID) {
+        return productService.getProductStock(productID);
     }
 
 
-    @RequestMapping(value = "/product/{prodID}/stock",method = RequestMethod.PUT)
-    public ProductResponse updateProductStock(@PathVariable String prodID, @RequestBody int newStock){
-        return productService.updateProductStock(prodID,newStock);
+    @Operation(summary = "Update Product Stock", description = "Update the product stock in catalog")
+    @RequestMapping(value = "/product/{productID}/stock", method = RequestMethod.PUT)
+    public ProductResponse updateProductStock(@PathVariable String productID, @RequestBody int newStock) {
+        return productService.updateProductStock(productID, newStock);
     }
 }

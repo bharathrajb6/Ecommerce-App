@@ -4,6 +4,7 @@ import com.example.product_service.DTO.Request.BrandRequest;
 import com.example.product_service.DTO.Response.ApiResponse;
 import com.example.product_service.DTO.Response.BrandResponse;
 import com.example.product_service.Service.BrandService;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +22,7 @@ public class BrandController {
      * @param request
      * @return
      */
+    @Operation(summary = "Add Brand", description = "Add brand to catalog")
     @RequestMapping(value = "/brand", method = RequestMethod.POST)
     public ApiResponse<BrandResponse> addBrand(@RequestBody BrandRequest request) {
         return ApiResponse.<BrandResponse>builder().result(brandService.addBrand(request)).build();
@@ -31,6 +33,7 @@ public class BrandController {
      * @param brandID
      * @return
      */
+    @Operation(summary = "Get Brand", description = "Get brand details from catalog")
     @RequestMapping(value = "/brand/{brandID}", method = RequestMethod.GET)
     public ApiResponse<BrandResponse> getBrand(@PathVariable String brandID) {
         return ApiResponse.<BrandResponse>builder().result(brandService.getBrand(brandID)).build();
@@ -40,6 +43,7 @@ public class BrandController {
      * This method is responsible for handling GET requests to fetch all brand details.
      * @return
      */
+    @Operation(summary = "Get All Brands", description = "Get all brands from catalog")
     @RequestMapping(value = "/brand", method = RequestMethod.GET)
     public ApiResponse<List<BrandResponse>> getAllBrands() {
         return ApiResponse.<List<BrandResponse>>builder().result(brandService.getAllBrands()).build();
@@ -51,6 +55,7 @@ public class BrandController {
      * @param request
      * @return
      */
+    @Operation(summary = "Update Brand", description = "Update the brand in catalog based on brand ID")
     @RequestMapping(value = "/brand/{brandName}", method = RequestMethod.PUT)
     public ApiResponse<BrandResponse> updateBrand(@PathVariable String brandName, @RequestBody BrandRequest request) {
         return ApiResponse.<BrandResponse>builder().result(brandService.updateBrand(brandName, request)).build();
@@ -61,6 +66,7 @@ public class BrandController {
      * @param value
      * @return
      */
+    @Operation(summary = "Delete Brand", description = "Delete brand from catalog based on brand ID")
     @RequestMapping(value = "/brand/{value}", method = RequestMethod.DELETE)
     public ApiResponse<Void> deleteBrand(@PathVariable String value) {
         return ApiResponse.<Void>builder().message(brandService.deleteBrand(value)).build();
