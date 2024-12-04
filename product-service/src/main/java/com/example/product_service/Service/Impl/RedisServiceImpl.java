@@ -22,7 +22,7 @@ public class RedisServiceImpl {
         try {
             Object data = redisTemplate.opsForValue().get(key);
             ObjectMapper objectMapper = new ObjectMapper();
-            if(data!=null){
+            if (data != null) {
                 return objectMapper.readValue(data.toString(), responseClass);
             }
         } catch (Exception exception) {
@@ -40,6 +40,16 @@ public class RedisServiceImpl {
             redisTemplate.opsForValue().set(key, jsonValue, ttl, TimeUnit.SECONDS);
         } catch (Exception exception) {
             log.error("Unable to convert");
+            throw new ProductExceptions(exception.getMessage());
+        }
+    }
+
+    public boolean deleteData(String key) {
+        try{
+            Object data = redisTemplate.opsForValue().getAndDelete(key);
+            return true;
+        } catch (Exception exception){
+            log.error("Unable to delete");
             throw new ProductExceptions(exception.getMessage());
         }
     }

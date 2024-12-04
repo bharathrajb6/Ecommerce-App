@@ -185,6 +185,7 @@ public class ProductServiceImpl implements ProductService {
             return productRepository.findByProdID(value).map(product -> {
                 try {
                     productRepository.delete(product);
+                    redisService.deleteData(value);
                     logger.info(LOG_PRODUCT_DELETED_SUCCESSFULLY, product.getProdName(), product.getProdID());
                     return PRODUCT_DELETED_SUCCESSFULLY;
                 } catch (Exception e) {
@@ -210,6 +211,7 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.findByProdName(productName).map(product -> {
             try {
                 productRepository.delete(product);
+                redisService.deleteData(productName);
                 logger.info(LOG_PRODUCT_DELETED_SUCCESSFULLY, product.getProdName(), product.getProdID());
                 return PRODUCT_DELETED_SUCCESSFULLY;
             } catch (Exception e) {
