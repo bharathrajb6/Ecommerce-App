@@ -33,19 +33,21 @@ import static com.example.product_service.validations.ProductValidationHandler.v
 @Service
 public class ProductServiceImpl implements ProductService {
     @Autowired
-    ProductRepository productRepository;
+    private ProductRepository productRepository;
     @Autowired
-    CategoryRepository categoryRepository;
+    private CategoryRepository categoryRepository;
     @Autowired
-    BrandRepository brandRepository;
+    private BrandRepository brandRepository;
     @Autowired
-    ProductMapper productMapper;
+    private ProductMapper productMapper;
+    @Autowired
+    private RedisServiceImpl redisService;
 
     private static final Logger logger = LoggerFactory.getLogger(ProductServiceImpl.class);
 
     /***
      * This method is used to add the product.
-     * @param product
+     * @param request
      * @return
      */
     @Override
@@ -88,17 +90,23 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductResponse getProduct(String value) {
         if (UUIDChecker(value)) {
-            return productRepository.findByProdID(value).map(product -> {
-                Brand brand = brandRepository.findByBrandID(product.getBrand()).orElse(null);
-                Category category = categoryRepository.findByCategoryID(product.getCategory()).orElse(null);
-                logger.info(LOG_PRODUCT_FETCHED_FROM_DB, product.getProdName());
-                assert category != null;
-                assert brand != null;
-                return productMapper.toProductResponse(addBrandAndCategoryToProduct(product, category, brand));
-            }).orElseThrow(() -> {
-                logger.error(LOG_PRODUCT_NOT_FOUND_WITH_ID, value);
-                return new ProductExceptions("Product not found with ID: " + value);
-            });
+            ProductResponse productResponse = redisService.getData(value, ProductResponse.class);
+            if (productResponse != null) {
+                return productResponse;
+            } else {
+                return productRepository.findByProdID(value).map(product -> {
+                    Brand brand = brandRepository.findByBrandID(product.getBrand()).orElse(null);
+                    Category category = categoryRepository.findByCategoryID(product.getCategory()).orElse(null);
+                    logger.info(LOG_PRODUCT_FETCHED_FROM_DB, product.getProdName());
+                    product.setCategory(category.getCategoryName());
+                    product.setBrand(brand.getBrandName());
+                    redisService.setData(value, product, 300L);
+                    return productMapper.toProductResponse(product);
+                }).orElseThrow(() -> {
+                    logger.error(LOG_PRODUCT_NOT_FOUND_WITH_ID, value);
+                    return new ProductExceptions("Product not found with ID: " + value);
+                });
+            }
         } else {
             return getProductByName(value);
         }
@@ -111,17 +119,23 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     public ProductResponse getProductByName(String prodName) {
-        return productRepository.findByProdName(prodName).map(product -> {
-            Brand brand = brandRepository.findByBrandID(product.getBrand()).orElse(null);
-            Category category = categoryRepository.findByCategoryID(product.getCategory()).orElse(null);
-            logger.info(LOG_PRODUCT_FETCHED_FROM_DB, product.getProdName());
-            assert category != null;
-            assert brand != null;
-            return productMapper.toProductResponse(addBrandAndCategoryToProduct(product, category, brand));
-        }).orElseThrow(() -> {
-            logger.error(LOG_PRODUCT_NOT_FOUND_WITH_NAME, prodName);
-            return new ProductExceptions(String.format(EXCEPTION_PRODUCT_NOT_FOUND_WITH_NAME, prodName));
-        });
+        ProductResponse productResponse = redisService.getData(prodName, ProductResponse.class);
+        if (productResponse != null) {
+            return productResponse;
+        } else {
+            return productRepository.findByProdName(prodName).map(product -> {
+                Brand brand = brandRepository.findByBrandID(product.getBrand()).orElse(null);
+                Category category = categoryRepository.findByCategoryID(product.getCategory()).orElse(null);
+                logger.info(LOG_PRODUCT_FETCHED_FROM_DB, product.getProdName());
+                product.setCategory(category.getCategoryName());
+                product.setBrand(brand.getBrandName());
+                redisService.setData(prodName, product, 300L);
+                return productMapper.toProductResponse(product);
+            }).orElseThrow(() -> {
+                logger.error(LOG_PRODUCT_NOT_FOUND_WITH_NAME, prodName);
+                return new ProductExceptions(String.format(EXCEPTION_PRODUCT_NOT_FOUND_WITH_NAME, prodName));
+            });
+        }
     }
 
     /***
@@ -134,16 +148,18 @@ public class ProductServiceImpl implements ProductService {
             Brand brand = brandRepository.findByBrandID(product.getBrand()).orElse(null);
             Category category = categoryRepository.findByCategoryID(product.getCategory()).orElse(null);
             logger.info(LOG_PRODUCT_FETCHED_FROM_DB, product.getProdName());
-            assert category != null;
-            assert brand != null;
-            return addBrandAndCategoryToProduct(product, category, brand);
+            product.setCategory(category.getCategoryName());
+            product.setBrand(brand.getBrandName());
+            return product;
         }).toList();
         return productMapper.toProductResponseList(productList);
     }
 
-    /***
+    /**
      * This method will update the product stock based on product ID.
-     * @param product
+     *
+     * @param prodID
+     * @param request
      * @return
      */
     @Override
@@ -160,7 +176,7 @@ public class ProductServiceImpl implements ProductService {
 
     /***
      * Deletes the product entity based on product ID.
-     * @param productID
+     * @param value
      * @return
      */
     @Override
@@ -208,19 +224,6 @@ public class ProductServiceImpl implements ProductService {
 
     /***
      * This method will return the product entity based on product name.
-     * @param product
-     * @param category
-     * @param brand
-     * @return
-     */
-    private Product addBrandAndCategoryToProduct(Product product, Category category, Brand brand) {
-        product.setCategory(category.getCategoryName());
-        product.setBrand(brand.getBrandName());
-        return product;
-    }
-
-    /***
-     * This method will return the product entity based on product name.
      * @param criteria
      * @return
      */
@@ -245,7 +248,7 @@ public class ProductServiceImpl implements ProductService {
             throw new ProductExceptions("Product not found");
         });
         try {
-            int result = productRepository.updateProductStock(newStock,product.getProdID());
+            int result = productRepository.updateProductStock(newStock, product.getProdID());
             return getProduct(prodID);
         } catch (Exception exception) {
             throw new ProductExceptions(exception.getMessage());
