@@ -1,4 +1,4 @@
-package com.example.product_service.DTO.Request;
+package com.example.product_service.DTO.Request.Product;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,12 +12,12 @@ import lombok.NoArgsConstructor;
 public class ProductRequest {
     private String prodName;
     private String prodDescription;
-    private String category;
+    private ProductCategoryRequest category;
+    private ProductBrandRequest brand;
     private int price;
     private int discountPrice;
     private int stock;
     private String currency;
-    private String brand;
     private double weight;
     private String dimensions;
     private String color;

@@ -7,8 +7,7 @@ import com.example.product_service.Mapper.CategoryMapper;
 import com.example.product_service.Model.Category;
 import com.example.product_service.Repository.CategoryRepository;
 import com.example.product_service.Service.CategoryService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,12 +22,16 @@ import static com.example.product_service.Utils.CommonUtils.UUIDChecker;
 import static com.example.product_service.validations.CategoryValidationHandler.validateCategoryDetails;
 
 @Service
+@Slf4j
 public class CategoryServiceImpl implements CategoryService {
     @Autowired
-    CategoryRepository categoryRepository;
+    private CategoryRepository categoryRepository;
+
     @Autowired
-    CategoryMapper categoryMapper;
-    private static final Logger logger = LoggerFactory.getLogger(CategoryServiceImpl.class);
+    private CategoryMapper categoryMapper;
+
+    @Autowired
+    private RedisServiceImpl redisService;
 
     /***
      * Add a new category
@@ -38,22 +41,31 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryResponse addCategory(CategoryRequest request) {
         if (categoryRepository.existsByCategoryName(request.getCategoryName())) {
-            logger.error(LOG_CATEGORY_WITH_SAME_NAME);
+            log.error(LOG_CATEGORY_WITH_SAME_NAME);
             throw new CategoryExceptions(EXCEPTION_CATEGORY_NAME_ALREADY_EXISTS);
         }
+
         Category category = categoryMapper.toCategory(request);
+
         category.setCategoryID(UUID.randomUUID().toString());
         category.setCategoryName(category.getCategoryName().toLowerCase());
         category.setActive(true);
-        category.setCreated_at(Timestamp.from(Instant.now()));
-        category.setUpdated_at(Timestamp.from(Instant.now()));
+
+        Timestamp currentTimeStamp = Timestamp.from(Instant.now());
+        category.setCreated_at(currentTimeStamp);
+        category.setUpdated_at(currentTimeStamp);
+
         validateCategoryDetails(category);
+
         try {
+            // Save the category information to database
             category = categoryRepository.save(category);
-            logger.info(LOG_CATEGORY_SAVED_SUCCESSFULLY, category.getCategoryName(), category.getCategoryID());
-            return categoryMapper.toCategoryResponse(category);
+
+            log.info(LOG_CATEGORY_SAVED_SUCCESSFULLY, category.getCategoryName(), category.getCategoryID());
+            return getCategory(category.getCategoryID());
         } catch (Exception e) {
-            logger.error(LOG_UNABLE_TO_SAVE_CATEGORY, category.getCategoryName(), e.getMessage());
+            // If any issue occured then throw category exception
+            log.error(LOG_UNABLE_TO_SAVE_CATEGORY, category.getCategoryName(), e.getMessage());
             throw new CategoryExceptions(String.format(EXCEPTION_UNABLE_TO_SAVE_CATEGORY, category.getCategoryName()));
         }
     }
@@ -65,17 +77,36 @@ public class CategoryServiceImpl implements CategoryService {
      */
     @Override
     public CategoryResponse getCategory(String value) {
+        // Check if the value is UUID
         if (UUIDChecker(value)) {
-            Category category = categoryRepository.findByCategoryID(value).orElseThrow(() -> {
-                logger.error(LOG_CATEGORY_NOT_FOUND_WITH_ID, value);
-                return new CategoryExceptions(String.format(EXCEPTION_CATEGORY_NOT_FOUND, value));
-            });
-            return categoryMapper.toCategoryResponse(category);
+            // Check if category information is present in cache
+            CategoryResponse categoryResponse = redisService.getData(value, CategoryResponse.class);
+            if (categoryResponse != null) {
+                return categoryResponse;
+            } else {
+                Category category = categoryRepository.findByCategoryID(value).orElseThrow(() -> {
+                    log.error(LOG_CATEGORY_NOT_FOUND_WITH_ID, value);
+                    return new CategoryExceptions(String.format(EXCEPTION_CATEGORY_NOT_FOUND, value));
+                });
+                redisService.setData(value, category, 300L);
+                return categoryMapper.toCategoryResponse(category);
+            }
+        } else {
+            return getCategoryByName(value);
+        }
+    }
+
+    @Override
+    public CategoryResponse getCategoryByName(String value) {
+        CategoryResponse categoryResponse = redisService.getData(value, CategoryResponse.class);
+        if (categoryResponse != null) {
+            return categoryResponse;
         } else {
             Category category = categoryRepository.findByCategoryName(value).orElseThrow(() -> {
-                logger.error(LOG_CATEGORY_NOT_FOUND_WITH_NAME, value);
+                log.error(LOG_CATEGORY_NOT_FOUND_WITH_NAME, value);
                 return new CategoryExceptions(String.format(EXCEPTION_CATEGORY_NOT_FOUND_WITH_NAME, value));
             });
+            redisService.setData(value, category, 300L);
             return categoryMapper.toCategoryResponse(category);
         }
     }
@@ -86,7 +117,14 @@ public class CategoryServiceImpl implements CategoryService {
      */
     @Override
     public List<CategoryResponse> getAllCategories() {
-        return categoryMapper.toListOfCategories(categoryRepository.findAll());
+        List<CategoryResponse> categoryResponses = redisService.getData("categoryList", List.class);
+        if (categoryResponses != null) {
+            return categoryResponses;
+        } else {
+            List<Category> categories = categoryRepository.findAll();
+            redisService.setData("categoryList", categories, 300L);
+            return categoryMapper.toListOfCategories(categories);
+        }
     }
 
 
@@ -99,16 +137,16 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryResponse updateCategory(String categoryName, CategoryRequest request) {
         Category category = categoryRepository.findByCategoryName(categoryName).orElseThrow(() -> {
-            logger.error(LOG_CATEGORY_NOT_FOUND_WITH_NAME, categoryName);
+            log.error(LOG_CATEGORY_NOT_FOUND_WITH_NAME, categoryName);
             return new CategoryExceptions(String.format(EXCEPTION_CATEGORY_NOT_FOUND_WITH_NAME, categoryName));
         });
         categoryMapper.updateCategoryDetails(category, request);
         try {
             categoryRepository.updateCategoryByID(category.getCategoryName(), category.getCategoryDescription(), Timestamp.from(Instant.now()), category.getCategoryID());
-            logger.info(LOG_CATEGORY_UPDATED_SUCCESSFULLY, category.getCategoryName(), category.getCategoryID());
+            log.info(LOG_CATEGORY_UPDATED_SUCCESSFULLY, category.getCategoryName(), category.getCategoryID());
             return getCategory(categoryName);
         } catch (Exception e) {
-            logger.error(LOG_UNABLE_TO_UPDATE_CATEGORY, category.getCategoryName(), e.getMessage());
+            log.error(LOG_UNABLE_TO_UPDATE_CATEGORY, category.getCategoryName(), e.getMessage());
             throw new CategoryExceptions(String.format(EXCEPTION_UNABLE_TO_UPDATE_CATEGORY, category.getCategoryName()), e);
         }
     }
@@ -124,14 +162,14 @@ public class CategoryServiceImpl implements CategoryService {
             return categoryRepository.findByCategoryID(value).map(existingCategory -> {
                 try {
                     categoryRepository.deleteByCategoryID(existingCategory.getCategoryID());
-                    logger.info(LOG_CATEGORY_DELETED_SUCCESSFULLY, existingCategory.getCategoryName(), existingCategory.getCategoryID());
+                    log.info(LOG_CATEGORY_DELETED_SUCCESSFULLY, existingCategory.getCategoryName(), existingCategory.getCategoryID());
                     return CATEGORY_DELETED_SUCCESSFULLY;
                 } catch (Exception e) {
-                    logger.error(LOG_UNABLE_TO_DELETE_CATEGORY, existingCategory.getCategoryName(), e.getMessage());
+                    log.error(LOG_UNABLE_TO_DELETE_CATEGORY, existingCategory.getCategoryName(), e.getMessage());
                     throw new CategoryExceptions(EXCEPTION_UNABLE_TO_DELETE_CATEGORY);
                 }
             }).orElseThrow(() -> {
-                logger.error(LOG_CATEGORY_NOT_FOUND_WITH_ID, value);
+                log.error(LOG_CATEGORY_NOT_FOUND_WITH_ID, value);
                 return new CategoryExceptions(String.format(EXCEPTION_CATEGORY_NOT_FOUND, value));
             });
         } else {
@@ -149,14 +187,14 @@ public class CategoryServiceImpl implements CategoryService {
         return categoryRepository.findByCategoryName(value).map(existingCategory -> {
             try {
                 categoryRepository.deleteByCategoryName(value);
-                logger.info(LOG_CATEGORY_DELETED_SUCCESSFULLY, existingCategory.getCategoryName(), existingCategory.getCategoryID());
+                log.info(LOG_CATEGORY_DELETED_SUCCESSFULLY, existingCategory.getCategoryName(), existingCategory.getCategoryID());
                 return CATEGORY_DELETED_SUCCESSFULLY;
             } catch (Exception e) {
-                logger.error(LOG_UNABLE_TO_DELETE_CATEGORY, existingCategory.getCategoryName(), e.getMessage());
+                log.error(LOG_UNABLE_TO_DELETE_CATEGORY, existingCategory.getCategoryName(), e.getMessage());
                 throw new CategoryExceptions(EXCEPTION_UNABLE_TO_DELETE_CATEGORY);
             }
         }).orElseThrow(() -> {
-            logger.error(LOG_CATEGORY_NOT_FOUND_WITH_NAME, value);
+            log.error(LOG_CATEGORY_NOT_FOUND_WITH_NAME, value);
             return new CategoryExceptions(String.format(EXCEPTION_CATEGORY_NOT_FOUND_WITH_NAME, value));
         });
     }

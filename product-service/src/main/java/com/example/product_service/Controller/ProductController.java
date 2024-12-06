@@ -1,7 +1,7 @@
 package com.example.product_service.Controller;
 
-import com.example.product_service.DTO.Request.ProductRequest;
-import com.example.product_service.DTO.Response.ProductResponse;
+import com.example.product_service.DTO.Request.Product.ProductRequest;
+import com.example.product_service.DTO.Response.Product.ProductResponse;
 import com.example.product_service.Service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;

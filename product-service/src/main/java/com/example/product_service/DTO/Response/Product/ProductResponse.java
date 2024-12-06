@@ -1,4 +1,4 @@
-package com.example.product_service.DTO.Response;
+package com.example.product_service.DTO.Response.Product;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,12 +15,12 @@ public class ProductResponse {
     private String prodID;
     private String prodName;
     private String prodDescription;
-    private String category;
+    private ProductCategoryResponse category;
+    private ProductBrandResponse brand;
     private int price;
     private int discountPrice;
     private int stock;
     private String currency;
-    private String brand;
     private double weight;
     private String dimensions;
     private String color;

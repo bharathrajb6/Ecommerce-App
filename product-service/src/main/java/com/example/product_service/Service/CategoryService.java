@@ -11,6 +11,8 @@ public interface CategoryService {
 
     CategoryResponse getCategory(String value);
 
+    CategoryResponse getCategoryByName(String value);
+
     List<CategoryResponse> getAllCategories();
 
     CategoryResponse updateCategory(String categoryName, CategoryRequest request);

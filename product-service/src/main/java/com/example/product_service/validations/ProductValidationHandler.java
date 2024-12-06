@@ -22,11 +22,11 @@ public class ProductValidationHandler {
             throw new ProductExceptions("Product Description is too long.");
         }
 
-        if(product.getPrice()<=0){
+        if (product.getPrice() <= 0) {
             throw new ProductExceptions("Price cannot be zero or negative");
         }
 
-        if(product.getStock()<=0){
+        if (product.getStock() <= 0) {
             throw new ProductExceptions("Quantity cannot be zero or negative");
         }
     }

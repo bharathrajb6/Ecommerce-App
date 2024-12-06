@@ -1,7 +1,7 @@
 package com.example.product_service.Service;
 
-import com.example.product_service.DTO.Request.ProductRequest;
-import com.example.product_service.DTO.Response.ProductResponse;
+import com.example.product_service.DTO.Request.Product.ProductRequest;
+import com.example.product_service.DTO.Response.Product.ProductResponse;
 
 import java.util.List;
 

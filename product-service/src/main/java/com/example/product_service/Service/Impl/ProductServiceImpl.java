@@ -1,36 +1,31 @@
 package com.example.product_service.Service.Impl;
 
-import com.example.product_service.DTO.Request.ProductRequest;
-import com.example.product_service.DTO.Response.ProductResponse;
+import com.example.product_service.DTO.Request.Product.ProductRequest;
+import com.example.product_service.DTO.Response.Product.ProductResponse;
 import com.example.product_service.Exceptions.ProductExceptions;
-import com.example.product_service.Mapper.ProductMapper;
-import com.example.product_service.Model.Brand;
-import com.example.product_service.Model.Category;
+import com.example.product_service.Helper.ProductHelper;
 import com.example.product_service.Model.Product;
 import com.example.product_service.Repository.BrandRepository;
 import com.example.product_service.Repository.CategoryRepository;
 import com.example.product_service.Repository.ProductRepository;
 import com.example.product_service.Service.ProductService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
+import java.util.stream.Collectors;
 
-import static com.example.product_service.Messages.Brand.BrandExceptionMessages.EXCEPTION_BRAND_NOT_FOUND_WITH_NAME;
-import static com.example.product_service.Messages.Brand.BrandLogMessages.LOG_BRAND_NOT_FOUND_WITH_NAME;
-import static com.example.product_service.Messages.Category.CategoryExceptionMessages.EXCEPTION_CATEGORY_NOT_FOUND_WITH_NAME;
-import static com.example.product_service.Messages.Category.CategoryLogMessages.LOG_CATEGORY_NOT_FOUND_WITH_NAME;
 import static com.example.product_service.Messages.Product.ProductExceptionMessages.*;
 import static com.example.product_service.Messages.Product.ProductLogMessages.*;
 import static com.example.product_service.Utils.CommonUtils.UUIDChecker;
 import static com.example.product_service.validations.ProductValidationHandler.validateProductDetails;
 
 @Service
+@Slf4j
 public class ProductServiceImpl implements ProductService {
     @Autowired
     private ProductRepository productRepository;
@@ -39,11 +34,10 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     private BrandRepository brandRepository;
     @Autowired
-    private ProductMapper productMapper;
-    @Autowired
     private RedisServiceImpl redisService;
 
-    private static final Logger logger = LoggerFactory.getLogger(ProductServiceImpl.class);
+    @Autowired
+    private ProductHelper productHelper;
 
     /***
      * This method is used to add the product.
@@ -51,33 +45,33 @@ public class ProductServiceImpl implements ProductService {
      * @return
      */
     @Override
+    @Transactional
     public ProductResponse addProduct(ProductRequest request) {
-        Product product = productMapper.toProduct(request);
-        if (productRepository.existsByProdName(product.getProdName())) {
-            logger.error(LOG_PRODUCT_ALREADY_EXISTS, product.getProdName());
-            throw new ProductExceptions(String.format(EXCEPTION_PRODUCT_ALREADY_FOUND, product.getProdName()));
+
+        // Check if product name is already present in database
+        if (productRepository.existsByProdName(request.getProdName())) {
+            log.error(LOG_PRODUCT_ALREADY_EXISTS, request.getProdName());
+            throw new ProductExceptions(String.format(EXCEPTION_PRODUCT_ALREADY_FOUND, request.getProdName()));
         }
+
+        Product product = productHelper.toProduct(request);
+        // Validate product
         validateProductDetails(product);
-        product.setProdID(UUID.randomUUID().toString());
-        Category category = categoryRepository.findByCategoryName(product.getCategory().toLowerCase()).orElseThrow(() -> {
-            logger.error(LOG_CATEGORY_NOT_FOUND_WITH_NAME, product.getCategory());
-            return new ProductExceptions(String.format(EXCEPTION_CATEGORY_NOT_FOUND_WITH_NAME, product.getCategory()));
-        });
-        Brand brand = brandRepository.findByBrandName(product.getBrand().toLowerCase()).orElseThrow(() -> {
-            logger.error(LOG_BRAND_NOT_FOUND_WITH_NAME, product.getBrand());
-            return new ProductExceptions(EXCEPTION_BRAND_NOT_FOUND_WITH_NAME);
-        });
+
         try {
-            product.setCategory(category.getCategoryID());
-            product.setBrand(brand.getBrandID());
+
             Timestamp currentTimestamp = Timestamp.from(Instant.now());
             product.setCreated_at(currentTimestamp);
             product.setUpdated_at(currentTimestamp);
+
+            // Save the data to database
             productRepository.save(product);
-            logger.info(LOG_PRODUCT_SAVED_SUCCESSFULLY, product.getProdName(), product.getProdID());
+            redisService.deleteData("productList");
+            log.info(LOG_PRODUCT_SAVED_SUCCESSFULLY, product.getProdName(), product.getProdID());
             return getProduct(product.getProdID());
         } catch (Exception e) {
-            logger.error(LOG_UNABLE_TO_SAVE_PRODUCT, product.getProdName(), e.getMessage());
+            // Throw product exception if any issue occurred
+            log.error(LOG_UNABLE_TO_SAVE_PRODUCT, product.getProdName(), e.getMessage());
             throw new ProductExceptions(String.format(EXCEPTION_UNABLE_TO_SAVE_PRODUCT, product.getProdName()));
         }
     }
@@ -89,21 +83,22 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     public ProductResponse getProduct(String value) {
+        // Check if the value is UUID
         if (UUIDChecker(value)) {
+            // Get the data from redis cache
             ProductResponse productResponse = redisService.getData(value, ProductResponse.class);
             if (productResponse != null) {
                 return productResponse;
             } else {
+                // If it's not present in cache, then return it from database
                 return productRepository.findByProdID(value).map(product -> {
-                    Brand brand = brandRepository.findByBrandID(product.getBrand()).orElse(null);
-                    Category category = categoryRepository.findByCategoryID(product.getCategory()).orElse(null);
-                    logger.info(LOG_PRODUCT_FETCHED_FROM_DB, product.getProdName());
-                    product.setCategory(category.getCategoryName());
-                    product.setBrand(brand.getBrandName());
-                    redisService.setData(value, product, 300L);
-                    return productMapper.toProductResponse(product);
+                    // add the product information to cache
+                    ProductResponse response = productHelper.toProductResponse(product);
+                    redisService.setData(response.getProdID(), response, 300L);
+                    return response;
                 }).orElseThrow(() -> {
-                    logger.error(LOG_PRODUCT_NOT_FOUND_WITH_ID, value);
+                    // Throw product exception if any issue occurred
+                    log.error(LOG_PRODUCT_NOT_FOUND_WITH_ID, value);
                     return new ProductExceptions("Product not found with ID: " + value);
                 });
             }
@@ -119,20 +114,21 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     public ProductResponse getProductByName(String prodName) {
+        // Get the data from redis cache
         ProductResponse productResponse = redisService.getData(prodName, ProductResponse.class);
         if (productResponse != null) {
             return productResponse;
         } else {
+            // If it's not present in cache, then return it from database
             return productRepository.findByProdName(prodName).map(product -> {
-                Brand brand = brandRepository.findByBrandID(product.getBrand()).orElse(null);
-                Category category = categoryRepository.findByCategoryID(product.getCategory()).orElse(null);
-                logger.info(LOG_PRODUCT_FETCHED_FROM_DB, product.getProdName());
-                product.setCategory(category.getCategoryName());
-                product.setBrand(brand.getBrandName());
-                redisService.setData(prodName, product, 300L);
-                return productMapper.toProductResponse(product);
+
+                ProductResponse response = productHelper.toProductResponse(product);
+                // add the product information to cache
+                redisService.setData(response.getProdName(), response, 300L);
+                return response;
             }).orElseThrow(() -> {
-                logger.error(LOG_PRODUCT_NOT_FOUND_WITH_NAME, prodName);
+                // Throw product exception if any issue occurred
+                log.error(LOG_PRODUCT_NOT_FOUND_WITH_NAME, prodName);
                 return new ProductExceptions(String.format(EXCEPTION_PRODUCT_NOT_FOUND_WITH_NAME, prodName));
             });
         }
@@ -144,15 +140,14 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     public List<ProductResponse> getAllProducts() {
-        List<Product> productList = productRepository.findAll().stream().map(product -> {
-            Brand brand = brandRepository.findByBrandID(product.getBrand()).orElse(null);
-            Category category = categoryRepository.findByCategoryID(product.getCategory()).orElse(null);
-            logger.info(LOG_PRODUCT_FETCHED_FROM_DB, product.getProdName());
-            product.setCategory(category.getCategoryName());
-            product.setBrand(brand.getBrandName());
-            return product;
-        }).toList();
-        return productMapper.toProductResponseList(productList);
+        List<ProductResponse> productResponses = redisService.getData("productList", List.class);
+        if (productResponses != null) {
+            return productResponses;
+        } else {
+            List<ProductResponse> productList = productRepository.findAll().stream().map(product -> productHelper.toProductResponse(product)).collect(Collectors.toList());
+            redisService.setData("productList", productList, 300L);
+            return productList;
+        }
     }
 
     /**
@@ -163,15 +158,27 @@ public class ProductServiceImpl implements ProductService {
      * @return
      */
     @Override
+    @Transactional
     public ProductResponse updateProduct(String prodID, ProductRequest request) {
         Product product = productRepository.findByProdID(prodID).orElseThrow(() -> {
-            logger.error(LOG_PRODUCT_NOT_FOUND_WITH_ID, prodID);
+            log.error(LOG_PRODUCT_NOT_FOUND_WITH_ID, prodID);
             return new ProductExceptions(String.format(EXCEPTION_PRODUCT_NOT_FOUND_WITH_ID, prodID));
         });
-        productMapper.updateProductStock(product, request);
-        int result = productRepository.updateProductByID(product.getDimensions(), product.getPrice(), product.getDiscountPrice(), product.getStock(), Timestamp.from(Instant.now()), prodID);
-        logger.info(LOG_PRODUCT_STOCK_UPDATED_SUCCESSFULLY, product.getProdName(), product.getProdID());
-        return productMapper.toProductResponse(product);
+
+        String newDimension = request.getDimensions();
+        int newPrice = request.getPrice();
+        int newDiscountPrice = request.getDiscountPrice();
+        int newStock = request.getStock();
+
+        // Update the product stock by product ID
+        productRepository.updateProductByID(newDimension, newPrice, newDiscountPrice, newStock, Timestamp.from(Instant.now()), prodID);
+
+        log.info(LOG_PRODUCT_STOCK_UPDATED_SUCCESSFULLY, product.getProdName(), product.getProdID());
+        // Delete the product data in cache
+        redisService.deleteData(prodID);
+        redisService.deleteData(product.getProdName());
+        redisService.deleteData("productList");
+        return getProduct(prodID);
     }
 
     /***
@@ -180,20 +187,29 @@ public class ProductServiceImpl implements ProductService {
      * @return
      */
     @Override
+    @Transactional
     public String deleteProduct(String value) {
+        // Check if the value is UUID
         if (UUIDChecker(value)) {
             return productRepository.findByProdID(value).map(product -> {
                 try {
+                    // Delete the product information from database
                     productRepository.delete(product);
+
+                    // Delete the product information from cache
                     redisService.deleteData(value);
-                    logger.info(LOG_PRODUCT_DELETED_SUCCESSFULLY, product.getProdName(), product.getProdID());
+                    redisService.deleteData("productList");
+
+                    log.info(LOG_PRODUCT_DELETED_SUCCESSFULLY, product.getProdName(), product.getProdID());
                     return PRODUCT_DELETED_SUCCESSFULLY;
                 } catch (Exception e) {
-                    logger.error(LOG_UNABLE_TO_DELETE_PRODUCT, product.getProdName(), product.getProdID());
+                    // If any issues occures throw Product Exception
+                    log.error(LOG_UNABLE_TO_DELETE_PRODUCT, product.getProdName(), product.getProdID());
                     throw new ProductExceptions(String.format(EXCEPTION_UNABLE_TO_DELETE_PRODUCT, product.getProdName()));
                 }
             }).orElseThrow(() -> {
-                logger.error(LOG_PRODUCT_NOT_FOUND_WITH_ID, value);
+                // If product is not found then throw product exception
+                log.error(LOG_PRODUCT_NOT_FOUND_WITH_ID, value);
                 return new ProductExceptions(String.format(EXCEPTION_PRODUCT_NOT_FOUND_WITH_ID, value));
             });
         } else {
@@ -210,16 +226,23 @@ public class ProductServiceImpl implements ProductService {
     public String deleteProductByName(String productName) {
         return productRepository.findByProdName(productName).map(product -> {
             try {
+                // Delete the product information from database
                 productRepository.delete(product);
+
+                // Delete the product information from cache
                 redisService.deleteData(productName);
-                logger.info(LOG_PRODUCT_DELETED_SUCCESSFULLY, product.getProdName(), product.getProdID());
+                redisService.deleteData("productList");
+
+                log.info(LOG_PRODUCT_DELETED_SUCCESSFULLY, product.getProdName(), product.getProdID());
                 return PRODUCT_DELETED_SUCCESSFULLY;
             } catch (Exception e) {
-                logger.error(LOG_UNABLE_TO_DELETE_PRODUCT, product.getProdName(), product.getProdID());
+                // If any issues occures throw Product Exception
+                log.error(LOG_UNABLE_TO_DELETE_PRODUCT, product.getProdName(), product.getProdID());
                 throw new ProductExceptions(String.format(EXCEPTION_UNABLE_TO_DELETE_PRODUCT, product.getProdName()));
             }
         }).orElseThrow(() -> {
-            logger.error(LOG_PRODUCT_NOT_FOUND_WITH_NAME, productName);
+            // If product is not found then throw product exception
+            log.error(LOG_PRODUCT_NOT_FOUND_WITH_NAME, productName);
             return new ProductExceptions(String.format(EXCEPTION_PRODUCT_NOT_FOUND_WITH_NAME, productName));
         });
     }
@@ -232,27 +255,52 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public List<ProductResponse> searchProduct(String criteria) {
         List<Product> productList = productRepository.searchProductBasedOnName(criteria);
-        logger.info(LOG_RETRIVE_ALL_DETAILS_FROM_DB_BASED_ON_SEARCH);
-        return productMapper.toProductResponseList(productList);
+        log.info(LOG_RETRIVE_ALL_DETAILS_FROM_DB_BASED_ON_SEARCH);
+        return productList.stream().map(product -> productHelper.toProductResponse(product)).collect(Collectors.toList());
     }
 
+    /**
+     * This method will return current stock of the product
+     *
+     * @param prodID
+     * @return
+     */
     @Override
     public int getProductStock(String prodID) {
-        Product product = productRepository.findByProdID(prodID).orElseThrow(() -> {
-            return new ProductExceptions("Product not found");
-        });
-        return product.getStock();
+        ProductResponse productResponse = redisService.getData(prodID, ProductResponse.class);
+        if (productResponse != null) {
+            return productResponse.getStock();
+        } else {
+            Product product = productRepository.findByProdID(prodID).orElseThrow(() -> {
+                return new ProductExceptions(String.format(EXCEPTION_PRODUCT_NOT_FOUND_WITH_ID, prodID));
+            });
+            return product.getStock();
+        }
     }
 
+    /**
+     * This method will update the stock of the product
+     *
+     * @param prodID
+     * @param newStock
+     * @return
+     */
     @Override
+    @Transactional
     public ProductResponse updateProductStock(String prodID, int newStock) {
         Product product = productRepository.findByProdID(prodID).orElseThrow(() -> {
-            throw new ProductExceptions("Product not found");
+            throw new ProductExceptions(String.format(EXCEPTION_PRODUCT_NOT_FOUND_WITH_ID, prodID));
         });
         try {
-            int result = productRepository.updateProductStock(newStock, product.getProdID());
+            // Update the product stock
+            productRepository.updateProductStock(newStock, product.getProdID());
+            // Update the product data in cache
+            redisService.deleteData(prodID);
+            redisService.deleteData(product.getProdName());
+            redisService.deleteData("productList");
             return getProduct(prodID);
         } catch (Exception exception) {
+            // If any issue occured then throw product exception with message
             throw new ProductExceptions(exception.getMessage());
         }
     }
