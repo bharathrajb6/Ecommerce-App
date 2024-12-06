@@ -35,7 +35,6 @@ public class ProductServiceImpl implements ProductService {
     private BrandRepository brandRepository;
     @Autowired
     private RedisServiceImpl redisService;
-
     @Autowired
     private ProductHelper productHelper;
 

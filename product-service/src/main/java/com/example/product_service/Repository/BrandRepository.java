@@ -26,7 +26,7 @@ public interface BrandRepository extends JpaRepository<Brand, String> {
     @Modifying
     @Transactional
     @Query("UPDATE Brand b SET b.brandName = ?1, b.brandDescription = ?2, b.updatedDate = ?3 WHERE b.brandID = ?4")
-    int updateBrandByID(String name, String description, Timestamp updatedAt, String brandID);
+    void updateBrandByID(String name, String description, Timestamp updatedAt, String brandID);
 
     @Modifying
     @Transactional

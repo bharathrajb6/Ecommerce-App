@@ -1,7 +1,7 @@
 package com.example.product_service.Service.Impl;
 
-import com.example.product_service.DTO.Response.Product.ProductResponse;
 import com.example.product_service.Exceptions.ProductExceptions;
+import com.example.product_service.Service.RedisService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -15,11 +15,12 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
-public class RedisServiceImpl {
+public class RedisServiceImpl implements RedisService {
 
     @Autowired
     private RedisTemplate redisTemplate;
 
+    @Override
     public <T> T getData(String key, Class<T> responseClass) {
 
         try {
@@ -28,7 +29,7 @@ public class RedisServiceImpl {
             if (data != null) {
                 if (responseClass.equals(List.class)) {
                     // For collections, use TypeReference
-                    return (T) objectMapper.readValue(data.toString(), new TypeReference<List<ProductResponse>>() {
+                    return (T) objectMapper.readValue(data.toString(), new TypeReference<List<T>>() {
                     });
                 } else {
                     // For single object
@@ -43,6 +44,7 @@ public class RedisServiceImpl {
     }
 
 
+    @Override
     public void setData(String key, Object object, Long ttl) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
@@ -54,10 +56,10 @@ public class RedisServiceImpl {
         }
     }
 
-    public boolean deleteData(String key) {
+    @Override
+    public void deleteData(String key) {
         try {
             redisTemplate.opsForValue().getAndDelete(key);
-            return true;
         } catch (Exception exception) {
             log.error("Unable to delete");
             throw new ProductExceptions(exception.getMessage());

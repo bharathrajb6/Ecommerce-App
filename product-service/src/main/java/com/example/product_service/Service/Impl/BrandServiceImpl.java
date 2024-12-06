@@ -7,8 +7,7 @@ import com.example.product_service.Mapper.BrandMapper;
 import com.example.product_service.Model.Brand;
 import com.example.product_service.Repository.BrandRepository;
 import com.example.product_service.Service.BrandService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,13 +22,15 @@ import static com.example.product_service.Utils.CommonUtils.UUIDChecker;
 import static com.example.product_service.validations.BrandValidationHandler.validateBrandDetails;
 
 @Service
+@Slf4j
 public class BrandServiceImpl implements BrandService {
     @Autowired
-    BrandRepository brandRepository;
+    private BrandRepository brandRepository;
     @Autowired
-    BrandMapper brandMapper;
+    private BrandMapper brandMapper;
 
-    private static final Logger logger = LoggerFactory.getLogger(BrandServiceImpl.class);
+    @Autowired
+    private RedisServiceImpl redisService;
 
     /***
      * Add a new brand to the database.
@@ -38,22 +39,31 @@ public class BrandServiceImpl implements BrandService {
      */
     @Override
     public BrandResponse addBrand(BrandRequest request) {
+
+        // Check if brand is already present in database
         if (brandRepository.existsByBrandName(request.getBrandName())) {
-            logger.error(LOG_BRAND_WITH_SAME_NAME);
+            log.error(LOG_BRAND_WITH_SAME_NAME);
             throw new BrandExceptions(EXCEPTION_BRAND_ALREADY_EXISTS);
         }
+
         Brand brand = brandMapper.toBrand(request);
         brand.setBrandID(UUID.randomUUID().toString());
         brand.setBrandName(brand.getBrandName().toLowerCase());
         brand.setCreatedDate(Timestamp.from(Instant.now()));
         brand.setUpdatedDate(Timestamp.from(Instant.now()));
+
+        // Validate the brand information
         validateBrandDetails(brand);
+
         try {
+            // Save the brand information to database
             brandRepository.save(brand);
-            logger.info(LOG_BRAND_SAVED_SUCCESSFULLY, brand.getBrandName());
+            log.info(LOG_BRAND_SAVED_SUCCESSFULLY, brand.getBrandName());
             return brandMapper.toBrandResponse(brand);
         } catch (Exception e) {
-            logger.info(LOG_UNABLE_TO_SAVE_BRAND, brand.getBrandName(), e.getMessage());
+            log.info(LOG_UNABLE_TO_SAVE_BRAND, brand.getBrandName(), e.getMessage());
+
+            // Throw the error if issues occured while saving the information
             throw new BrandExceptions(String.format(EXCEPTION_UNABLE_TO_SAVE_BRAND, brand.getBrandName()));
         }
     }
@@ -65,15 +75,46 @@ public class BrandServiceImpl implements BrandService {
      */
     @Override
     public BrandResponse getBrand(String value) {
+        // Check if the value is UUID
         if (UUIDChecker(value)) {
-            Brand brand = brandRepository.findByBrandID(value).orElseThrow(() -> {
-                return new BrandExceptions(EXCEPTION_BRAND_NOT_FOUND_WITH_ID);
-            });
-            return brandMapper.toBrandResponse(brand);
+            // Check if brand information is present in cache
+            BrandResponse brandResponse = redisService.getData(value, BrandResponse.class);
+            if (brandResponse != null) {
+                return brandResponse;
+            } else {
+                // If it is not present in cache, then load the brand information from database
+                Brand brand = brandRepository.findByBrandID(value).orElseThrow(() -> {
+                    return new BrandExceptions(EXCEPTION_BRAND_NOT_FOUND_WITH_ID);
+                });
+
+                // Save the brand information to database
+                redisService.setData(brand.getBrandID(), brand, 300L);
+                return brandMapper.toBrandResponse(brand);
+            }
         } else {
+            return getBrandByName(value);
+        }
+    }
+
+    /**
+     * This method will return brand information based on brand name
+     *
+     * @param value
+     * @return
+     */
+    public BrandResponse getBrandByName(String value) {
+        // Check if brand information is present in cache
+        BrandResponse brandResponse = redisService.getData(value, BrandResponse.class);
+        if (brandResponse != null) {
+            return brandResponse;
+        } else {
+            // If it is not present in cache, the load it from database
             Brand brand = brandRepository.findByBrandName(value).orElseThrow(() -> {
                 return new BrandExceptions(EXCEPTION_BRAND_NOT_FOUND_WITH_NAME);
             });
+
+            // Save the brand information to cache
+            redisService.setData(brand.getBrandName(), brand, 300L);
             return brandMapper.toBrandResponse(brand);
         }
     }
@@ -84,7 +125,18 @@ public class BrandServiceImpl implements BrandService {
      */
     @Override
     public List<BrandResponse> getAllBrands() {
-        return brandMapper.toBrandResponseList(brandRepository.findAll());
+        // Check if brandList is available in cache
+        List<BrandResponse> brandResponses = redisService.getData("brandList", List.class);
+        if (brandResponses != null) {
+            return brandResponses;
+        } else {
+            // If it's not there, then load it from database
+            List<Brand> brandList = brandRepository.findAll();
+
+            // Add the info to cache
+            redisService.setData("brandList", brandList, 300L);
+            return brandMapper.toBrandResponseList(brandList);
+        }
     }
 
     /***
@@ -95,17 +147,28 @@ public class BrandServiceImpl implements BrandService {
      */
     @Override
     public BrandResponse updateBrand(String brandName, BrandRequest request) {
+        // Check if brand is exist with this name
         Brand brand = brandRepository.findByBrandName(brandName).orElseThrow(() -> {
             return new BrandExceptions(EXCEPTION_BRAND_NOT_FOUND_WITH_NAME);
         });
         brandMapper.updateBrandDetails(brand, request);
+
+        // Validate the brand
         validateBrandDetails(brand);
+
         try {
-            int result = brandRepository.updateBrandByID(brand.getBrandName(), brand.getBrandDescription(), Timestamp.from(Instant.now()), brand.getBrandID());
-            logger.info(LOG_BRAND_UPDATED_SUCCESSFULLY, brand.getBrandName());
+            // Update the brand with latest info
+            brandRepository.updateBrandByID(brand.getBrandName(), brand.getBrandDescription(), Timestamp.from(Instant.now()), brand.getBrandID());
+            log.info(LOG_BRAND_UPDATED_SUCCESSFULLY, brand.getBrandName());
+
+            // Delete the data from cache to avoid mismatch data
+            redisService.deleteData(brandName);
+            redisService.deleteData(brand.getBrandID());
+            redisService.deleteData("brandList");
+
             return getBrand(brandName);
         } catch (org.springframework.dao.DataIntegrityViolationException integrityViolationException) {
-            logger.error(LOG_UNABLE_TO_UPDATE_BRAND, brand.getBrandName(), integrityViolationException.getMessage());
+            log.error(LOG_UNABLE_TO_UPDATE_BRAND, brand.getBrandName(), integrityViolationException.getMessage());
             throw new BrandExceptions("Data integrity violation while updating brand.", integrityViolationException.getCause());
         }
     }
@@ -123,14 +186,17 @@ public class BrandServiceImpl implements BrandService {
             return brandRepository.findByBrandID(value).map(brand -> {
                 try {
                     brandRepository.deleteByBrandID(value);
-                    logger.info(LOG_BRAND_DELETED_SUCCESSFULLY, brand.getBrandName());
+                    redisService.deleteData(value);
+                    redisService.deleteData("brandList");
+                    redisService.deleteData(brand.getBrandName());
+                    log.info(LOG_BRAND_DELETED_SUCCESSFULLY, brand.getBrandName());
                     return String.format(EXCEPTION_BRAND_DELETED_SUCCESSFULLY, brand.getBrandName());
                 } catch (Exception e) {
-                    logger.error(LOG_UNABLE_TO_DELETE_BRAND, brand.getBrandName(), e.getMessage());
+                    log.error(LOG_UNABLE_TO_DELETE_BRAND, brand.getBrandName(), e.getMessage());
                     throw new BrandExceptions(String.format(EXCEPTION_UNABLE_TO_DELETE_BRAND, brand.getBrandName()));
                 }
             }).orElseThrow(() -> {
-                logger.error(LOG_BRAND_NOT_FOUND_WITH_ID, value);
+                log.error(LOG_BRAND_NOT_FOUND_WITH_ID, value);
                 return new BrandExceptions(EXCEPTION_BRAND_NOT_FOUND_WITH_ID);
             });
         } else {
@@ -149,14 +215,17 @@ public class BrandServiceImpl implements BrandService {
         return brandRepository.findByBrandName(brandName).map(brand -> {
             try {
                 brandRepository.deleteByBrandName(brandName);
-                logger.info(LOG_BRAND_DELETED_SUCCESSFULLY, brandName);
+                redisService.deleteData(brandName);
+                redisService.deleteData("brandList");
+                redisService.deleteData(brand.getBrandID());
+                log.info(LOG_BRAND_DELETED_SUCCESSFULLY, brandName);
                 return String.format(EXCEPTION_BRAND_DELETED_SUCCESSFULLY, brandName);
             } catch (Exception e) {
-                logger.error(LOG_UNABLE_TO_DELETE_BRAND, brandName, e.getMessage());
+                log.error(LOG_UNABLE_TO_DELETE_BRAND, brandName, e.getMessage());
                 throw new BrandExceptions(String.format(EXCEPTION_UNABLE_TO_DELETE_BRAND, brandName));
             }
         }).orElseThrow(() -> {
-            logger.error(LOG_BRAND_NOT_FOUND_WITH_NAME, brandName);
+            log.error(LOG_BRAND_NOT_FOUND_WITH_NAME, brandName);
             return new BrandExceptions(EXCEPTION_BRAND_NOT_FOUND_WITH_NAME);
         });
     }
