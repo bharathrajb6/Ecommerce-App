@@ -3,7 +3,7 @@ package com.example.user_service.Controller;
 import com.example.user_service.DTO.Request.ProductRequest;
 import com.example.user_service.DTO.Request.UserRequest;
 import com.example.user_service.DTO.Response.ApiResponse;
-import com.example.user_service.DTO.Response.ProductResponse;
+import com.example.user_service.DTO.Response.Product.ProductResponse;
 import com.example.user_service.DTO.Response.UserResponse;
 import com.example.user_service.Service.Impl.ProductServiceImpl;
 import com.example.user_service.Service.UserService;

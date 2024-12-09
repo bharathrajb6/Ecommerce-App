@@ -1,13 +1,14 @@
 package com.example.user_service.Service.Impl;
 
 import com.example.user_service.DTO.Request.ProductRequest;
-import com.example.user_service.DTO.Response.ProductResponse;
+import com.example.user_service.DTO.Response.Product.ProductResponse;
 import com.example.user_service.Exceptions.ProductException;
 import com.example.user_service.Service.ProductService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -22,6 +23,7 @@ public class ProductServiceImpl {
      * This method is used to get all the products used by both admin and user
      * @return
      */
+    @PreAuthorize("hasRole('ADMIN')")
     public List<ProductResponse> getAllProducts() {
         try {
             return productService.getAllProducts();
@@ -60,6 +62,7 @@ public class ProductServiceImpl {
      * @return
      */
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public ProductResponse addProduct(ProductRequest request) {
         try {
             return productService.addProduct(request);
@@ -76,6 +79,7 @@ public class ProductServiceImpl {
      * @return
      */
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public ProductResponse updateProduct(String prodID, ProductRequest request) {
         try {
             return productService.updateProduct(prodID, request);
@@ -86,10 +90,18 @@ public class ProductServiceImpl {
     }
 
 
+    /**
+     * This method is used to delete the product from catalog.
+     *
+     * @param prodID
+     * @return
+     */
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public String deleteProduct(String prodID) {
-        try{
+        try {
             return productService.deleteProduct(prodID);
-        }catch(ProductException productException){
+        } catch (ProductException productException) {
             log.error(productException.getMessage());
             throw new ProductException(productException.getMessage());
         }

@@ -4,7 +4,7 @@ import com.example.user_service.DTO.Request.OrderRequest;
 import com.example.user_service.DTO.Request.UserRequest;
 import com.example.user_service.DTO.Response.ApiResponse;
 import com.example.user_service.DTO.Response.OrderResponse;
-import com.example.user_service.DTO.Response.ProductResponse;
+import com.example.user_service.DTO.Response.Product.ProductResponse;
 import com.example.user_service.DTO.Response.UserResponse;
 import com.example.user_service.Service.Impl.OrderServiceImpl;
 import com.example.user_service.Service.Impl.ProductServiceImpl;
@@ -93,36 +93,71 @@ public class UserController {
     }
 
 
+    /**
+     * This method is used to place the order
+     *
+     * @param request
+     * @return
+     */
     @Operation(summary = "Place Order", description = "Create order")
     @RequestMapping(value = "/order", method = RequestMethod.POST)
     public OrderResponse placeOrder(@RequestBody OrderRequest request) {
         return orderService.placeOrder(request);
     }
 
+    /**
+     * This method is used to get the order details based on order ID
+     *
+     * @param orderID
+     * @return
+     */
     @Operation(summary = "Get Order Details", description = "Get the order details based on order ID")
     @RequestMapping(value = "/order/{orderID}", method = RequestMethod.GET)
     public OrderResponse getOrderDetails(@PathVariable String orderID) {
         return orderService.getOrderDetails(orderID);
     }
 
+    /**
+     * This method is used to cancel the order based on order ID
+     *
+     * @param orderID
+     * @return
+     */
     @Operation(summary = "Cancel Order", description = "Cancel the order based on orderID")
     @RequestMapping(value = "/order/cancel/{orderID}", method = RequestMethod.PUT)
     public String cancelOrder(@PathVariable String orderID) {
         return orderService.cancelOrder(orderID);
     }
 
+    /**
+     * This method is used to get all cancelled orders
+     *
+     * @return
+     */
     @Operation(summary = "Get All Cancelled Orders", description = "Get all cancelled orders based on username")
     @RequestMapping(value = "/order/cancelled", method = RequestMethod.GET)
     public List<OrderResponse> getAllCancelledOrders() {
         return orderService.getAllCancelledOrders();
     }
 
+
+    /**
+     * This method is used to track the order based on tracking number
+     *
+     * @param trackingNumber
+     * @return
+     */
     @Operation(summary = "Track Order", description = "Track order based on tracking number")
     @RequestMapping(value = "/order/track/{trackingNumber}", method = RequestMethod.GET)
     public OrderResponse getOrderByTrackingNumber(@PathVariable String trackingNumber) {
         return orderService.getOrderByTrackingNumber(trackingNumber);
     }
 
+    /**
+     * This method is used to get the orders based on username
+     *
+     * @return
+     */
     @RequestMapping(value = "/order/search", method = RequestMethod.GET)
     public List<OrderResponse> getOrderByUsername() {
         return orderService.getAllOrdersByUserName();

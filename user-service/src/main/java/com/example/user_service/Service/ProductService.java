@@ -1,7 +1,7 @@
 package com.example.user_service.Service;
 
 import com.example.user_service.DTO.Request.ProductRequest;
-import com.example.user_service.DTO.Response.ProductResponse;
+import com.example.user_service.DTO.Response.Product.ProductResponse;
 import com.example.user_service.config.FeignConfig;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PathVariable;
