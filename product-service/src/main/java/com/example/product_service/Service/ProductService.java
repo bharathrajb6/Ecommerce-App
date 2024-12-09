@@ -1,5 +1,6 @@
 package com.example.product_service.Service;
 
+import com.example.product_service.DTO.Request.Product.ProductCategoryRequest;
 import com.example.product_service.DTO.Request.Product.ProductRequest;
 import com.example.product_service.DTO.Response.Product.ProductResponse;
 
@@ -25,5 +26,7 @@ public interface ProductService {
 
     int getProductStock(String prodID);
 
-    ProductResponse updateProductStock(String prodID,int newStock);
+    ProductResponse updateProductStock(String prodID, int newStock);
+
+    List<ProductResponse> getProductsByCategory(String categoryID);
 }

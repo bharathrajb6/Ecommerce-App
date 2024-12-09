@@ -1,5 +1,6 @@
 package com.example.product_service.Controller;
 
+import com.example.product_service.DTO.Request.Product.ProductCategoryRequest;
 import com.example.product_service.DTO.Request.Product.ProductRequest;
 import com.example.product_service.DTO.Response.Product.ProductResponse;
 import com.example.product_service.Service.ProductService;
@@ -50,6 +51,7 @@ public class ProductController {
 
     /**
      * This method is responsible for handling PUT requests to update a product.
+     *
      * @param productID
      * @param request
      * @return
@@ -93,5 +95,11 @@ public class ProductController {
     @RequestMapping(value = "/product/{productID}/stock", method = RequestMethod.PUT)
     public ProductResponse updateProductStock(@PathVariable String productID, @RequestBody int newStock) {
         return productService.updateProductStock(productID, newStock);
+    }
+
+    @Operation(summary = "Get Products by Category", description = "Get All Products by Category from catalog")
+    @RequestMapping(value = "/product/category/{categoryID}", method = RequestMethod.GET)
+    public List<ProductResponse> getProductsByCategory(@PathVariable String categoryID) {
+        return productService.getProductsByCategory(categoryID);
     }
 }

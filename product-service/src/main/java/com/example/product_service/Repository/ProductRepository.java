@@ -31,7 +31,7 @@ public interface ProductRepository extends JpaRepository<Product, String> {
     @Modifying
     @Transactional
     @Query("UPDATE Product p SET p.prodDescription = ?1,p.price = ?2, p.discountPrice = ?3, p.stock = ?4, p.updated_at = ?5 where p.prodID = ?6")
-    int updateProductByID(String description, int price, int discountPrice, int stock, Timestamp updated_at, String prodID);
+    void updateProductByID(String description, int price, int discountPrice, int stock, Timestamp updated_at, String prodID);
 
     boolean existsByProdName(String productName);
 
@@ -42,4 +42,8 @@ public interface ProductRepository extends JpaRepository<Product, String> {
     @Transactional
     @Query("UPDATE Product p SET p.stock = ?1 where p.prodID = ?2")
     void updateProductStock(int newStock, String prodID);
+
+    @Query("SELECT p from Product p where p.category = ?1")
+    List<Product> getProductByCategory(String categoryID);
+
 }

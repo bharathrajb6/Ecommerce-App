@@ -1,6 +1,8 @@
 package com.example.product_service.Service.Impl;
 
+import com.example.product_service.DTO.Request.Product.ProductCategoryRequest;
 import com.example.product_service.DTO.Request.Product.ProductRequest;
+import com.example.product_service.DTO.Response.CategoryResponse;
 import com.example.product_service.DTO.Response.Product.ProductResponse;
 import com.example.product_service.Exceptions.ProductExceptions;
 import com.example.product_service.Helper.ProductHelper;
@@ -301,6 +303,21 @@ public class ProductServiceImpl implements ProductService {
         } catch (Exception exception) {
             // If any issue occured then throw product exception with message
             throw new ProductExceptions(exception.getMessage());
+        }
+    }
+
+    @Override
+    public List<ProductResponse> getProductsByCategory(String categoryID) {
+        String key = "ProductCategory - " + categoryID;
+        List<ProductResponse> productResponses = redisService.getData(key, List.class);
+        if (productResponses != null) {
+            return productResponses;
+        } else {
+            String existingCategoryID = productHelper.getCategoryDetails(categoryID).getId();
+            List<Product> productList = productRepository.getProductByCategory(existingCategoryID);
+            productResponses = productList.stream().map(product -> productHelper.toProductResponse(product)).collect(Collectors.toList());
+            redisService.setData(key, productResponses, 300L);
+            return productResponses;
         }
     }
 }
