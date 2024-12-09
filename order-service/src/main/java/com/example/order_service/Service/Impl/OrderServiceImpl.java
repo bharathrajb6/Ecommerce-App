@@ -21,6 +21,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Session;
@@ -35,16 +36,26 @@ import static com.example.order_service.messages.OrderMessages.*;
 public class OrderServiceImpl implements OrderService, MailService {
     @Autowired
     private OrderRepository orderRepository;
+
     @Autowired
     private OrderItemRepository orderItemRepository;
+
     @Autowired
     private OrderMapper orderMapper;
+
     @Autowired
     private OrderItemMapper orderItemMapper;
+
     @Autowired
     private OrderHelper orderHelper;
+
     @Autowired
     private ProductService productService;
+
+    @Autowired
+    private RedisServiceImpl redisService;
+
+    private static final String cancelled = "CANCELLED";
 
     /***
      * This method will place order of the customer.
@@ -55,6 +66,7 @@ public class OrderServiceImpl implements OrderService, MailService {
     public OrderResponse placeOrder(OrderRequest request) {
         Orders orders = orderHelper.generateOrder(request);
         orderRepository.save(orders);
+        redisService.deleteData("orderList");
         log.info(ORDER_PLACED, orders.getOrderID());
         return getOrderDetails(orders.getOrderID());
     }
@@ -66,11 +78,18 @@ public class OrderServiceImpl implements OrderService, MailService {
      */
     @Override
     public OrderResponse getOrderDetails(String orderID) {
-        Orders orders = orderRepository.findById(orderID).orElseThrow(() -> {
-            return new OrderException(ORDER_NOT_FOUND_WITH_ID + orderID);
-        });
-        log.info(ORDER_FOUND_WITH_ID, orders.getOrderID());
-        return orderMapper.toOrderResponse(orders);
+        OrderResponse orderResponse = redisService.getData(orderID, OrderResponse.class);
+        if (orderResponse != null) {
+            return orderResponse;
+        } else {
+            Orders orders = orderRepository.findById(orderID).orElseThrow(() -> {
+                return new OrderException(ORDER_NOT_FOUND_WITH_ID + orderID);
+            });
+            orderResponse = orderMapper.toOrderResponse(orders);
+            redisService.setData(orderID, orderResponse, 300L);
+            log.info(ORDER_FOUND_WITH_ID, orders.getOrderID());
+            return orderResponse;
+        }
     }
 
     /***
@@ -79,8 +98,15 @@ public class OrderServiceImpl implements OrderService, MailService {
      */
     @Override
     public List<OrderResponse> getAllOrders() {
-        List<Orders> ordersList = orderRepository.findAll();
-        return orderMapper.toOrderResponseList(ordersList);
+        List<OrderResponse> orderResponses = redisService.getData("orderList", List.class);
+        if (orderResponses != null) {
+            return orderResponses;
+        } else {
+            List<Orders> ordersList = orderRepository.findAll();
+            orderResponses = orderMapper.toOrderResponseList(ordersList);
+            redisService.setData("orderList", orderResponses, 300L);
+            return orderResponses;
+        }
     }
 
     /***
@@ -94,6 +120,8 @@ public class OrderServiceImpl implements OrderService, MailService {
         OrderStatus newOrderStatus = OrderStatus.valueOf(orderStatus);
         try {
             orderRepository.updateOrderStatus(newOrderStatus, Timestamp.from(Instant.now()), orderID);
+            redisService.deleteData(orderID);
+            redisService.deleteData("orderList");
             log.info(ORDER_STATUS_UPDATED);
             return getOrderDetails(orderID);
         } catch (Exception e) {
@@ -115,6 +143,8 @@ public class OrderServiceImpl implements OrderService, MailService {
             });
             orderHelper.updateProductAfterCancel(orders.getOrderItems());
             orderRepository.updateOrderStatus(OrderStatus.CANCELLED, Timestamp.from(Instant.now()), orderID);
+            redisService.deleteData(orderID);
+            redisService.deleteData("orderList");
             log.info(ORDER_CANCELLED_SUCCESSFULLY + orderID);
             return ORDER_CANCELLED_SUCCESSFULLY;
         } catch (Exception e) {
@@ -130,8 +160,7 @@ public class OrderServiceImpl implements OrderService, MailService {
      */
     @Override
     public List<OrderResponse> getAllCancelledOrdersForUser(String username) {
-        List<Orders> ordersList = orderRepository.getAllCancelledOrdersForUser(OrderStatus.CANCELLED, username);
-        return orderMapper.toOrderResponseList(ordersList);
+        return getOrdersBasedOnUser(username, cancelled);
     }
 
     /***
@@ -151,7 +180,7 @@ public class OrderServiceImpl implements OrderService, MailService {
      */
     @Override
     public List<OrderResponse> getAllOrdersByUserName(String username) {
-        return orderMapper.toOrderResponseList(orderRepository.getOrdersByUsername(username));
+        return getOrdersBasedOnUser(username, "All");
     }
 
     /***
@@ -166,19 +195,38 @@ public class OrderServiceImpl implements OrderService, MailService {
 
     @Override
     public int getTotalOrders() {
-        return orderRepository.findAll().size();
+        List<OrderResponse> orderResponses = redisService.getData("orderList", List.class);
+        if (orderResponses != null) {
+            return orderResponses.size();
+        }
+        List<Orders> orders = orderRepository.findAll();
+        orderResponses = orderMapper.toOrderResponseList(orders);
+        redisService.setData("orderList", orderResponses, 300L);
+        return orderResponses.size();
     }
 
     @Override
     public List<OrderResponse> getOrderFilter(String start, String end) {
+        List<OrderResponse> orderResponses = redisService.getData("orderList", List.class);
+        if (orderResponses != null) {
+            return orderHelper.filterOrders(start, end, orderResponses);
+        }
         List<Orders> ordersList = orderRepository.findAll();
-        List<Orders> filteredOrders = orderHelper.filterOrders(start, end, ordersList);
-        return orderMapper.toOrderResponseList(filteredOrders);
+        orderResponses = orderMapper.toOrderResponseList(ordersList);
+        redisService.setData("orderList", orderResponses, 300L);
+        return orderHelper.filterOrders(start, end, orderResponses);
     }
 
     @Override
     public int getAllCancelledOrders() {
-        return orderRepository.getAllCancelledOrders(OrderStatus.CANCELLED).size();
+        List<OrderResponse> orderResponses = redisService.getData("orderList", List.class);
+        if (orderResponses != null) {
+            return orderResponses.stream().filter(orderResponse -> orderResponse.getOrderStatus().equals(cancelled)).collect(Collectors.toList()).size();
+        }
+        List<Orders> ordersList = orderRepository.findAll();
+        orderResponses = orderMapper.toOrderResponseList(ordersList);
+        redisService.setData("orderList", orderResponses, 300L);
+        return orderResponses.stream().filter(orderResponse -> orderResponse.getOrderStatus().equals(cancelled)).collect(Collectors.toList()).size();
     }
 
 
@@ -220,14 +268,42 @@ public class OrderServiceImpl implements OrderService, MailService {
 
     @Override
     public double getTotalRevenue() {
+        List<OrderResponse> orderResponses = redisService.getData("orderList", List.class);
+        if (orderResponses != null) {
+            return orderResponses.stream().mapToDouble(OrderResponse::getTotalAmount).sum();
+        }
         List<Orders> ordersList = orderRepository.findAll();
-        return ordersList.stream().mapToDouble(Orders::getTotalAmount).sum();
+        orderResponses = orderMapper.toOrderResponseList(ordersList);
+        redisService.setData("orderList", orderResponses, 300L);
+        return orderResponses.stream().mapToDouble(OrderResponse::getTotalAmount).sum();
     }
 
     @Override
     public double getTotalRevenueFilter(String start, String end) {
+        List<OrderResponse> orderResponses = redisService.getData("orderList", List.class);
+        if (orderResponses != null) {
+            return orderHelper.filterOrders(start, end, orderResponses).stream().mapToDouble(OrderResponse::getTotalAmount).sum();
+        }
         List<Orders> ordersList = orderRepository.findAll();
-        List<Orders> filteredOrders = orderHelper.filterOrders(start, end, ordersList);
-        return filteredOrders.stream().mapToDouble(Orders::getTotalAmount).sum();
+        orderResponses = orderMapper.toOrderResponseList(ordersList);
+        redisService.setData("orderList", orderResponses, 300L);
+        List<OrderResponse> filteredOrders = orderHelper.filterOrders(start, end, orderResponses);
+        return filteredOrders.stream().mapToDouble(OrderResponse::getTotalAmount).sum();
     }
+
+
+    private List<OrderResponse> getOrdersBasedOnUser(String username, String operationType) {
+        String key = "orders - " + username;
+        List<OrderResponse> orderResponses = redisService.getData(key, List.class);
+        if (orderResponses != null) {
+            return orderHelper.filterOrderResponses(orderResponses, operationType);
+        }
+        List<Orders> ordersList = orderRepository.getOrdersByUsername(username);
+        orderResponses = orderMapper.toOrderResponseList(ordersList);
+        if (orderResponses != null || !orderResponses.isEmpty()) {
+            redisService.setData(key, orderResponses, 300L);
+        }
+        return orderHelper.filterOrderResponses(orderResponses, operationType);
+    }
+
 }

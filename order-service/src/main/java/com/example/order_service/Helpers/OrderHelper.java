@@ -2,6 +2,7 @@ package com.example.order_service.Helpers;
 
 import com.example.order_service.DTO.Request.OrderItemRequest;
 import com.example.order_service.DTO.Request.OrderRequest;
+import com.example.order_service.DTO.Response.OrderResponse;
 import com.example.order_service.DTO.Response.ProductResponse;
 import com.example.order_service.Exception.OrderException;
 import com.example.order_service.Mapper.OrderItemMapper;
@@ -13,6 +14,7 @@ import com.example.order_service.Repository.OrderRepository;
 import com.example.order_service.Service.ProductService;
 import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.query.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,8 +23,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static com.example.order_service.messages.OrderMessages.*;
 
@@ -35,6 +39,8 @@ public class OrderHelper {
     private OrderItemMapper orderItemMapper;
     @Autowired
     private ProductService productService;
+
+    private static final String cancelled = "CANCELLED";
 
     /***
      * This method is used to generate order
@@ -127,7 +133,7 @@ public class OrderHelper {
         }
     }
 
-    public List<Orders> filterOrders(String start, String end, List<Orders> ordersList) {
+    public List<OrderResponse> filterOrders(String start, String end, List<OrderResponse> ordersList) {
         LocalDate startDate;
         LocalDate endDate;
         try {
@@ -136,8 +142,8 @@ public class OrderHelper {
         } catch (DateTimeParseException parseException) {
             throw new OrderException(parseException.getMessage());
         }
-        List<Orders> filteredOrderList = new ArrayList<>();
-        for (Orders orders : ordersList) {
+        List<OrderResponse> filteredOrderList = new ArrayList<>();
+        for (OrderResponse orders : ordersList) {
             Timestamp orderTimeStamp = orders.getCreatedAt();
             LocalDate date = orderTimeStamp.toLocalDateTime().toLocalDate();
             if ((date.isAfter(startDate) && date.isBefore(endDate)) || date.equals(startDate) || date.equals(endDate)) {
@@ -145,5 +151,24 @@ public class OrderHelper {
             }
         }
         return filteredOrderList;
+    }
+
+    /**
+     * Filters the orders based on the operation type.
+     *
+     * @param orderResponses List of OrderResponse
+     * @param operationType  The operation type to filter by
+     * @return Filtered list of OrderResponse
+     */
+    public List<OrderResponse> filterOrderResponses(List<OrderResponse> orderResponses, String operationType) {
+        if (orderResponses == null || orderResponses.isEmpty()) {
+            return Collections.emptyList();
+        }
+        if (cancelled.equals(operationType)) {
+            return orderResponses.stream()
+                    .filter(orderResponse -> "cancelled".equals(orderResponse.getOrderStatus()))
+                    .collect(Collectors.toList());
+        }
+        return orderResponses;
     }
 }

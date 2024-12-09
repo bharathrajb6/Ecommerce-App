@@ -27,5 +27,6 @@ public class OrderResponse {
     private String shippingAddress;
     private String shippingMethod;
     private String trackingNumber;
+    private Timestamp createdAt;
     private Timestamp updatedAt;
 }

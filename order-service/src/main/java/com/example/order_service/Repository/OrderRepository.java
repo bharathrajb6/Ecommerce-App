@@ -3,16 +3,13 @@ package com.example.order_service.Repository;
 
 import com.example.order_service.Model.OrderStatus;
 import com.example.order_service.Model.Orders;
-import org.hibernate.query.Order;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -28,16 +25,6 @@ public interface OrderRepository extends JpaRepository<Orders, String> {
     @Transactional
     @Query("UPDATE Orders o SET o.orderStatus = ?1,o.updatedAt = ?2 WHERE o.orderID = ?3")
     void updateOrderStatus(OrderStatus status, Timestamp updatedAt, String orderID);
-
-
-    /***
-     * This method is used to get all cancelled orders by username
-     * @param orderStatus
-     * @param username
-     * @return
-     */
-    @Query("SELECT o from Orders o where o.orderStatus = ?1 and o.username = ?2")
-    List<Orders> getAllCancelledOrdersForUser(OrderStatus orderStatus, String username);
 
     /***
      * This method is used to get order details by tracking number
@@ -70,13 +57,4 @@ public interface OrderRepository extends JpaRepository<Orders, String> {
      */
     @Query("SELECT o from Orders o where o.orderStatus LIKE CONCAT('%', ?1, '%')")
     List<Orders> searchOrdersByOrderStatus(String status);
-
-    /**
-     * This method will return all cancelled orders
-     *
-     * @param status
-     * @return
-     */
-    @Query("SELECT o from Orders o where o.orderStatus = ?1")
-    List<Orders> getAllCancelledOrders(OrderStatus status);
 }
