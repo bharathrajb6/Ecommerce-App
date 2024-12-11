@@ -12,9 +12,9 @@ import org.springframework.web.context.request.WebRequest;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(CartException.class)
-    public ResponseEntity<?> handleCartException(CartException cartException, WebRequest request){
+    public ResponseEntity<?> handleCartException(CartException cartException, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(),
-                "Cart Error",cartException.getMessage());
-        return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
+                "Cart Error", cartException.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 }

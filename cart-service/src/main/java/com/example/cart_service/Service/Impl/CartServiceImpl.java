@@ -1,6 +1,7 @@
 package com.example.cart_service.Service.Impl;
 
 import com.example.cart_service.DTO.Request.CartRequest;
+import com.example.cart_service.DTO.Response.CartItemResponse;
 import com.example.cart_service.DTO.Response.CartResponse;
 import com.example.cart_service.Exception.CartException;
 import com.example.cart_service.Helper.CartServiceHelper;
@@ -40,6 +41,9 @@ public class CartServiceImpl implements CartService {
     @Autowired
     private CartMapper cartMapper;
 
+    @Autowired
+    private RedisServiceImpl redisService;
+
     private static final String ITEMS_DELETED_SUCCESSFULLY = "Items have been deleted successfully";
 
     /**
@@ -57,6 +61,7 @@ public class CartServiceImpl implements CartService {
             try {
                 cartRepository.save(cart);
                 log.info(CART_ITEMS_SAVED_SUCCESSFULLY);
+                redisService.deleteData("cartList");
                 return cartMapper.toCartResponse(cart);
             } catch (Exception exception) {
                 log.error(UNABLE_TO_SAVE_CART_ITEMS);
@@ -75,11 +80,18 @@ public class CartServiceImpl implements CartService {
      */
     @Override
     public CartResponse getCartItems(String username) {
+        String key = "cart" + username;
+        CartResponse cartResponse = redisService.getData(key, CartResponse.class);
+        if (cartResponse != null) {
+            return cartResponse;
+        }
         Cart cart = cartRepository.findByUsername(username).orElseThrow(() -> {
             log.error(CART_ITEMS_NOT_FOUND_FOR_USER, username);
             return new CartException(EXCEPTION_CART_ITEMS_NOT_FOUND_FOR_USER + username);
         });
-        return cartMapper.toCartResponse(cart);
+        cartResponse = cartMapper.toCartResponse(cart);
+        redisService.setData(key, cartResponse, 300L);
+        return cartResponse;
     }
 
     /**
@@ -112,6 +124,9 @@ public class CartServiceImpl implements CartService {
         }
         cartServiceHelper.updateCartAmount(cart);
         cartRepository.updateByLastUpdateTime(Timestamp.from(Instant.now()), username);
+        String key = "cart" + username;
+        redisService.deleteData(key);
+        redisService.deleteData("cartList");
         log.info(UPDATED_TOTAL_AMOUNT_CART);
         return getCartItems(username);
     }
@@ -132,6 +147,9 @@ public class CartServiceImpl implements CartService {
         try {
             cartItemRepository.deleteByCart(cart);
             cartRepository.delete(cart);
+            String key = "cart" + username;
+            redisService.deleteData(key);
+            redisService.deleteData("cartList");
             log.info(ITEMS_DELETED_SUCCESSFULLY);
         } catch (Exception exception) {
             log.error(FAILED_TO_DELETE_CART_ITEMS, exception.getMessage());
@@ -148,11 +166,18 @@ public class CartServiceImpl implements CartService {
      */
     @Override
     public double getTotalCartAmount(String username) {
+        String key = "cart" + username;
+        CartResponse cartResponse = redisService.getData(key, CartResponse.class);
+        if (cartResponse != null) {
+            return cartResponse.getCartItemsList().stream().mapToDouble(CartItemResponse::getTotalPrice).sum();
+        }
         Cart cart = cartRepository.findByUsername(username).orElseThrow(() -> {
             log.error(CART_ITEMS_NOT_FOUND_FOR_USER, username);
             return new CartException(EXCEPTION_CART_ITEMS_NOT_FOUND_FOR_USER + username);
         });
-        return cart.getTotalAmount();
+        cartResponse = cartMapper.toCartResponse(cart);
+        redisService.setData(key, cartResponse, 300L);
+        return cartResponse.getCartItemsList().stream().mapToDouble(CartItemResponse::getTotalPrice).sum();
     }
 
     /**
@@ -177,6 +202,9 @@ public class CartServiceImpl implements CartService {
         if (!differentProductIDs.isEmpty()) {
             cartServiceHelper.addProductsToCart(differentProductIDs, cartRequest, cart, "DIFF");
         }
+        String key = "cart" + cartRequest.getUsername();
+        redisService.deleteData("cartList");
+        redisService.deleteData(key);
         return getCartItems(cartRequest.getUsername());
     }
 

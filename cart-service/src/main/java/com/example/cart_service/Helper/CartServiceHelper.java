@@ -34,6 +34,7 @@ public class CartServiceHelper {
 
     @Autowired
     private CartRepository cartRepository;
+
     @Autowired
     private CartItemRepository cartItemRepository;
 
@@ -152,6 +153,8 @@ public class CartServiceHelper {
                     int totalQuantity = cartItems.getQuantity() + cartItemsRequest.get().getQuantity();
                     double totalPrice = totalQuantity * cartItems.getPrice();
                     cartItemRepository.updateCartProductQuantity(cartItemsRequest.get().getQuantity(), totalPrice, cartItems.getCartItemID());
+                    updateCartAmount(cart);
+                    cartRepository.updateByLastUpdateTime(Timestamp.from(Instant.now()), cartRequest.getUsername());
                 }
             }
         } else if (productType.equals("DIFF")) {
