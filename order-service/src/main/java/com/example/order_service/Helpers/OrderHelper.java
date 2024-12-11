@@ -10,11 +10,10 @@ import com.example.order_service.Mapper.OrderMapper;
 import com.example.order_service.Model.OrderItems;
 import com.example.order_service.Model.OrderStatus;
 import com.example.order_service.Model.Orders;
-import com.example.order_service.Repository.OrderRepository;
+import com.example.order_service.Service.Impl.RedisServiceImpl;
 import com.example.order_service.Service.ProductService;
 import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.query.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +27,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static com.example.order_service.messages.OrderMessages.*;
+import static com.example.order_service.Messages.OrderMessages.*;
 
 @Service
 @Slf4j
@@ -40,6 +39,9 @@ public class OrderHelper {
     @Autowired
     private ProductService productService;
 
+    @Autowired
+    private RedisServiceImpl redisService;
+
     private static final String cancelled = "CANCELLED";
 
     /***
@@ -48,25 +50,42 @@ public class OrderHelper {
      * @return
      */
     public Orders generateOrder(OrderRequest request) {
+        // This method is used to check if all products have requested quantity
         checkIfAllProductsStocks(request.getOrderItems());
+
+        // Convert the order request to order
         Orders order = orderMapper.toOrders(request);
+
+        // Generate the order ID using UUID
+        String id = UUID.randomUUID().toString();
         order.setUsername(request.getUsername());
-        order.setOrderID(UUID.randomUUID().toString());
+        order.setOrderID(id);
         order.setOrderStatus(OrderStatus.PLACED);
-        order.setTrackingNumber("TRACK" + UUID.randomUUID().toString());
+        order.setTrackingNumber("TRACK" + id);
+
+        // Calculate the total amount of all products
         order.setTotalAmount(calculateTotalAmount(request.getOrderItems()));
-        order.setCreatedAt(Timestamp.from(Instant.now()));
-        order.setUpdatedAt(Timestamp.from(Instant.now()));
+
+        Timestamp currentTimeStamp = Timestamp.from(Instant.now());
+        order.setCreatedAt(currentTimeStamp);
+        order.setUpdatedAt(currentTimeStamp);
+
         String paymentMethod = order.getPaymentMethod();
         order.setPaymentStatus(getPaymentStatus(paymentMethod));
+
         List<OrderItems> orderItems = order.getOrderItems();
         for (OrderItems item : orderItems) {
-            ProductResponse product = productService.getProduct(item.getProductId());
+            // Get the product details from cache. If it is not present in cache, then get the data from product service
+            ProductResponse product = redisService.getData(item.getProductId(), ProductResponse.class);
+            if (product == null) {
+                product = productService.getProduct(item.getProductId());
+            }
             item.setOrderItemId(UUID.randomUUID().toString());
             item.setOrder(order);
             item.setPrice((double) product.getPrice());
             item.setTotalPrice(item.getPrice() * item.getQuantity());
         }
+
         log.info(ORDER_CREATED);
         return order;
     }
@@ -78,8 +97,12 @@ public class OrderHelper {
      */
     private Double calculateTotalAmount(List<OrderItemRequest> orderItemRequestList) {
         return orderItemRequestList.stream().mapToDouble(itemRequest -> {
-            ProductResponse product = productService.getProduct(itemRequest.getProductId());
-            double itemTotal = product.getPrice() * itemRequest.getQuantity();
+            ProductResponse product = redisService.getData(itemRequest.getProductId(), ProductResponse.class);
+            if (product == null) {
+                product = productService.getProduct(itemRequest.getProductId());
+            }
+            double itemTotal = product.getPrice() * (double) itemRequest.getQuantity();
+            // Update the product stock after order
             productService.updateProductStock(itemRequest.getProductId(), product.getStock() - itemRequest.getQuantity());
             return itemTotal;
         }).sum();
@@ -117,7 +140,7 @@ public class OrderHelper {
     }
 
     /***
-     * This method is used to update product after cancel
+     * This method is used to update product stock after cancel
      * @param orderItems
      */
     public void updateProductAfterCancel(List<OrderItems> orderItems) {
@@ -125,6 +148,7 @@ public class OrderHelper {
             try {
                 ProductResponse product = productService.getProduct(item.getProductId());
                 productService.updateProductStock(item.getProductId(), product.getStock() + item.getQuantity());
+                redisService.deleteData(product.getProdID());
                 log.info(PRODUCT_UPDATED_AFTER_ORDER_CANCEL, product.getProdName());
             } catch (FeignException exception) {
                 log.error(UNABLE_UPDATE_PRODUCT_AFTER_ORDER_CANCEL, item.getProductId());
@@ -133,6 +157,14 @@ public class OrderHelper {
         }
     }
 
+    /**
+     * This method is used to filter the orders based on start date and end date
+     *
+     * @param start
+     * @param end
+     * @param ordersList
+     * @return
+     */
     public List<OrderResponse> filterOrders(String start, String end, List<OrderResponse> ordersList) {
         LocalDate startDate;
         LocalDate endDate;
@@ -165,9 +197,7 @@ public class OrderHelper {
             return Collections.emptyList();
         }
         if (cancelled.equals(operationType)) {
-            return orderResponses.stream()
-                    .filter(orderResponse -> "cancelled".equals(orderResponse.getOrderStatus()))
-                    .collect(Collectors.toList());
+            return orderResponses.stream().filter(orderResponse -> "cancelled".equals(orderResponse.getOrderStatus())).collect(Collectors.toList());
         }
         return orderResponses;
     }

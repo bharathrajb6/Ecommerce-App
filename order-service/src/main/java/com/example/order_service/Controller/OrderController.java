@@ -94,8 +94,8 @@ public class OrderController {
     }
 
     /***
-     * This method is used to search orders by created date.
-     * @param criteria
+     * This method is used to search orders by username
+     * @param username
      * @return
      */
     @Operation(summary = "Search Order", description = "Search order based on username")
@@ -104,30 +104,59 @@ public class OrderController {
         return orderService.getAllOrdersByUserName(username);
     }
 
+    /**
+     * This method is used to get total orders
+     *
+     * @return
+     */
     @Operation(summary = "Get Total Orders", description = "Get Total Orders")
     @RequestMapping(value = "/order/totalOrders", method = RequestMethod.GET)
     public int getTotalOrders() {
         return orderService.getTotalOrders();
     }
 
+    /**
+     * This method is used to get all orders in the given time
+     *
+     * @param start
+     * @param end
+     * @return
+     */
     @Operation(summary = "Get Orders", description = "Get all orders based on start and end date")
     @RequestMapping(value = "/order/filter", method = RequestMethod.GET)
     public List<OrderResponse> getOrdersFilter(@RequestParam("start") String start, @RequestParam("end") String end) {
         return orderService.getOrderFilter(start, end);
     }
 
+    /**
+     * This method is used to get total count of cancelled orders
+     *
+     * @return
+     */
     @Operation(summary = "Get Total Cancelled Orders", description = "Get total cancelled orders")
     @RequestMapping(value = "/order/cancelled", method = RequestMethod.GET)
     public int getAllCancelledOrders() {
         return orderService.getAllCancelledOrders();
     }
 
+    /**
+     * This method is used to get the total revenue
+     *
+     * @return
+     */
     @Operation(summary = "Get Total Revenue", description = "Get total revenue")
     @RequestMapping(value = "/order/revenue", method = RequestMethod.GET)
     public double getTotalRevenue() {
         return orderService.getTotalRevenue();
     }
 
+    /**
+     * This method is used to get the total revenue in the given time
+     *
+     * @param start
+     * @param end
+     * @return
+     */
     @Operation(summary = "Get Revenue", description = "Get revenue based on start date and end date")
     @RequestMapping(value = "/order/revenue/filter", method = RequestMethod.GET)
     public double getTotalRevenueFilter(@RequestParam("start") String start, @RequestParam("end") String end) {

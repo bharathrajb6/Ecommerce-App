@@ -29,6 +29,14 @@ public class RedisServiceImpl implements RedisService {
         return objectMapper;
     }
 
+    /**
+     * This method is used to get the data from cache using key
+     *
+     * @param key
+     * @param responseClass
+     * @param <T>
+     * @return
+     */
     @Override
     public <T> T getData(String key, Class<T> responseClass) {
         try {
@@ -48,6 +56,13 @@ public class RedisServiceImpl implements RedisService {
         return null;
     }
 
+    /**
+     * This method is used to save the data to cache using key
+     *
+     * @param key
+     * @param o
+     * @param ttl
+     */
     @Override
     public void setData(String key, Object o, Long ttl) {
         try {
@@ -59,6 +74,11 @@ public class RedisServiceImpl implements RedisService {
         }
     }
 
+    /**
+     * This method is used to delete the data from cache using key
+     *
+     * @param key
+     */
     @Override
     public void deleteData(String key) {
         try {

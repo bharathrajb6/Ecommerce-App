@@ -48,13 +48,4 @@ public interface OrderRepository extends JpaRepository<Orders, String> {
      */
     @Query("SELECT o FROM Orders o WHERE o.createdAt = ?1")
     List<Orders> searchOrdersByCreatedDate(Timestamp createdAt);
-
-
-    /***
-     * This method is used to search orders by order status
-     * @param status
-     * @return
-     */
-    @Query("SELECT o from Orders o where o.orderStatus LIKE CONCAT('%', ?1, '%')")
-    List<Orders> searchOrdersByOrderStatus(String status);
 }

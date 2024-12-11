@@ -1,4 +1,4 @@
-package com.example.order_service.messages;
+package com.example.order_service.Messages;
 
 public class OrderMessages {
 
